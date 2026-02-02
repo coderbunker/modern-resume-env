@@ -2,8 +2,11 @@ name: Build and Push to S3 Cache
 
 on:
   push:
-    branches:
-      - master
+    paths:
+      - "flake.nix"
+      - ".github/workflows/push-to-s3.yml"
+      - ".github/actions/setup-nix-env/action.yml"
+
   workflow_dispatch:
 
 jobs:
