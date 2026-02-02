@@ -1,0 +1,76 @@
+name: S3 Performance Benchmark
+
+on:
+  workflow_dispatch:
+    inputs:
+      file_size_mb:
+        description: 'Size of the large test file in MB'
+        required: true
+        default: '100'
+
+jobs:
+  benchmark:
+    runs-on: self-hosted-nix
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: S3 Benchmark
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_KEY }}
+          S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }}
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}
+          S3_REGION: ${{ secrets.S3_REGION }}
+          FILE_SIZE: ${{ github.event.inputs.file_size_mb }}
+        run: |
+          nix shell nixpkgs#awscli2 nixpkgs#bc --command bash -c "
+            set -e
+
+            echo '--- S3 Performance Benchmark ---'
+            echo 'Endpoint: $S3_ENDPOINT'
+            echo 'Bucket:   $S3_BUCKET'
+            echo 'Region:   $S3_REGION'
+            echo '-------------------------------'
+
+            # 1. Latency Test (Small files)
+            echo 'Testing Latency (10x 1KB files)...'
+            START_TIME=\$(date +%s.%N)
+            for i in {1..10}; do
+              echo 'test' > \"latency_\$i.txt\"
+              aws --endpoint-url https://\$S3_ENDPOINT s3 cp \"latency_\$i.txt\" s3://\$S3_BUCKET/bench/latency_\$i.txt --region \$S3_REGION > /dev/null
+            done
+            END_TIME=\$(date +%s.%N)
+            LATENCY=\$(echo \"(\$END_TIME - \$START_TIME) / 10\" | bc -l)
+            echo \"Average latency per upload: \$LATENCY seconds\"
+
+            # 2. Throughput Test (Large file)
+            echo \"Testing Throughput (\$FILE_SIZE MB file)...\"
+            dd if=/dev/urandom of=throughput_test.bin bs=1M count=\$FILE_SIZE status=none
+
+            # Upload
+            echo 'Starting Upload...'
+            START_TIME=\$(date +%s.%N)
+            aws --endpoint-url https://\$S3_ENDPOINT s3 cp throughput_test.bin s3://\$S3_BUCKET/bench/throughput_test.bin --region \$S3_REGION
+            END_TIME=\$(date +%s.%N)
+            DURATION=\$(echo \"\$END_TIME - \$START_TIME\" | bc -l)
+            SPEED=\$(echo \"\$FILE_SIZE / \$DURATION\" | bc -l)
+            echo \"Upload Speed: \$SPEED MB/s (Total time: \$DURATION s)\"
+
+            # Download
+            echo 'Starting Download...'
+            START_TIME=\$(date +%s.%N)
+            aws --endpoint-url https://\$S3_ENDPOINT s3 cp s3://\$S3_BUCKET/bench/throughput_test.bin throughput_test_down.bin --region \$S3_REGION
+            END_TIME=\$(date +%s.%N)
+            DURATION=\$(echo \"\$END_TIME - \$START_TIME\" | bc -l)
+            SPEED=\$(echo \"\$FILE_SIZE / \$DURATION\" | bc -l)
+            echo \"Download Speed: \$SPEED MB/s (Total time: \$DURATION s)\"
+
+            # 3. Cleanup
+            echo 'Cleaning up benchmark files...'
+            aws --endpoint-url https://\$S3_ENDPOINT s3 rm s3://\$S3_BUCKET/bench/ --recursive --region \$S3_REGION
+            rm latency_*.txt throughput_test.bin throughput_test_down.bin
+
+            echo '-------------------------------'
+            echo 'Benchmark Complete.'
+          "
