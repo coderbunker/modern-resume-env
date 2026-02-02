@@ -14,8 +14,8 @@
           config.allowUnfree = true;
         };
 
-        # Consolidated Version Script
-        versions = pkgs.writeShellScriptBin "versions" ''
+        # Standard Version Script (Public)
+        baseVersions = pkgs.writeShellScriptBin "versions" ''
           jq -n \
             --arg bun "$(bun --version)" \
             --arg node "$(node --version | sed 's/^v//')" \
@@ -29,7 +29,6 @@
             --arg gh "$(gh --version | head -n1 | awk '{print $3}')" \
             --arg skopeo "$(skopeo --version | awk '{print $3}')" \
             --arg precommit "$(pre-commit --version | awk '{print $2}')" \
-            --arg ovh "$(ovhcloud-cli version | awk '{print $3}' 2>/dev/null || echo 'N/A')" \
             '{
               bun: $bun,
               node: $node,
@@ -42,54 +41,16 @@
               aws: $aws,
               gh: $gh,
               skopeo: $skopeo,
-              precommit: $precommit,
-              ovh: $ovh
+              precommit: $precommit
             }'
         '';
 
-        # Kubernetes Helpers
-        staging = pkgs.writeShellScriptBin "staging" "exec kubectl -n cv-staging-coderbunker-ca \"$@\"";
-        prod = pkgs.writeShellScriptBin "prod" "exec kubectl -n cv \"$@\"";
-        runners = pkgs.writeShellScriptBin "runners" "exec kubectl -n github-runners \"$@\"";
-
-        pod-shell = pkgs.writeShellScriptBin "pod-shell" ''
-          if [ -z "$1" ]; then
-            echo "Usage: pod-shell <pod_name> [command]"
-            exit 1
-          fi
-          POD_NAME=$1
-          CMD=''${2:-/bin/bash}
-          NAMESPACE=$(kubectl get pods --all-namespaces --field-selector metadata.name="$POD_NAME" -o jsonpath='{.items[0].metadata.namespace}')
-          if [ -z "$NAMESPACE" ]; then
-            echo "Error: Pod '$POD_NAME' not found."
-            exit 1
-          fi
-          exec kubectl exec -it -n "$NAMESPACE" "$POD_NAME" -- "$CMD"
-        '';
-
-        ovh-cli-pkg = pkgs.buildGoModule rec {
-          pname = "ovh-cli";
-          version = "0.9.0";
-
-          src = pkgs.fetchFromGitHub {
-            owner = "ovh";
-            repo = "ovhcloud-cli";
-            rev = "v${version}";
-            sha256 = "0kvd2r0ah6zjn0plz3nk7yzn5zmc1df5xfsjlz5f27fpaa62jzvx";
-          };
-
-          vendorHash = "sha256-WNONEceR/cDVloosQ/BMYjPTk9elQ1oTX89lgzENSAI=";
-
-          doCheck = false;
-        };
-
-        tofu-with-plugins = pkgs.opentofu.withPlugins (p: [
-          p.hashicorp_aws
-          p.ovh_ovh
-        ]);
-
       in
       {
+        packages = {
+          versions = baseVersions;
+        };
+
         devShells.default = pkgs.mkShell {
           buildInputs = with pkgs; [
             # Runtime
@@ -97,7 +58,7 @@
             nodejs_24
             go
 
-            # CI/CD & Deployment
+            # CI/CD & Deployment Tools
             kubectl
             kubernetes-helm
             awscli2
@@ -105,8 +66,6 @@
             skopeo
             cosign
             pre-commit
-            tofu-with-plugins
-            ovh-cli-pkg
 
             # Docker tools
             docker
@@ -128,12 +87,8 @@
             bc
             dnsutils
 
-            # Our Helpers
-            versions
-            staging
-            prod
-            runners
-            pod-shell
+            # Shared Helpers
+            self.packages.${system}.versions
           ] ++ (if system == "aarch64-darwin" || system == "x86_64-darwin" then [] else [
             stdenv.cc.cc.lib
             glibc
@@ -150,21 +105,6 @@
             mkdir -p "$DOCKER_CONFIG/cli-plugins"
             ln -sf "${pkgs.docker-buildx}/bin/docker-buildx" "$DOCKER_CONFIG/cli-plugins/docker-buildx"
 
-            # Sync docker auth if available
-            if [ -f "$HOME/.docker/config.json" ]; then
-              if [ ! -f "$DOCKER_CONFIG/config.json" ] || ! cmp -s "$HOME/.docker/config.json" "$DOCKER_CONFIG/config.json"; then
-                cp -f "$HOME/.docker/config.json" "$DOCKER_CONFIG/config.json"
-              fi
-            fi
-
-            # Setup LD_LIBRARY_PATH for Linux
-            if [ "$(uname)" = "Linux" ]; then
-              export LD_LIBRARY_PATH="${pkgs.lib.makeLibraryPath [
-                pkgs.stdenv.cc.cc.lib
-                pkgs.openssl
-              ]}:$LD_LIBRARY_PATH"
-            fi
-
             # Automatic KUBECONFIG discovery
             if [ -z "$KUBECONFIG" ]; then
               if [ -f "$PWD/kubeconfig.yaml" ]; then export KUBECONFIG="$PWD/kubeconfig.yaml"
@@ -173,9 +113,6 @@
             fi
 
             log_interactive "\033[1;32mModern Resume Shared Environment Loaded\033[0m"
-            if [ ! -z "$KUBECONFIG" ]; then
-              log_interactive "KUBECONFIG: $KUBECONFIG (Helpers: staging, prod, runners, pod-shell)"
-            fi
           '';
         };
       }
