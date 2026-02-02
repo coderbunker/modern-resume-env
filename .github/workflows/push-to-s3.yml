@@ -65,7 +65,21 @@ jobs:
           S3_REGION: ${{ secrets.S3_REGION }}     # e.g., bhs
           CACHE_SIGNING_KEY: ${{ secrets.CACHE_SIGNING_KEY }}
         run: |
-          # Write signing key to a temporary file
+          # 1. Ensure nix-cache-info exists and is public (enables HTTP reading)
+          # Nix copy usually handles this, but explicit upload ensures public ACL for HTTP access
+          cat <<EOF > nix-cache-info
+StoreDir: /nix/store
+WantMassQuery: 1
+Priority: 30
+EOF
+          nix shell nixpkgs#awscli2 --command bash -c "
+            aws --endpoint-url https://$S3_ENDPOINT s3 cp nix-cache-info s3://$S3_BUCKET/nix-cache-info \
+              --acl public-read \
+              --region $S3_REGION
+          "
+          rm nix-cache-info
+
+          # 2. Write signing key to a temporary file
           echo "$CACHE_SIGNING_KEY" > cache-priv-key.pem
 
           # Copy and sign all derivations referenced by the devShell to the S3 bucket
