@@ -1,0 +1,82 @@
+name: Setup Nix Shared Environment
+description: Loads the shared Nix flake environment using direnv and configures the S3 binary cache.
+
+inputs:
+  s3_bucket:
+    description: 'Name of the S3 bucket for the binary cache'
+    required: false
+  s3_endpoint:
+    description: 'S3 API endpoint'
+    required: false
+  s3_public_key:
+    description: 'Public key for verifying signed packages'
+    required: false
+  github_access_token:
+    description: 'GitHub token for accessing private flakes'
+    required: false
+
+runs:
+  using: "composite"
+  steps:
+    - name: Configure Nix Cache
+      shell: bash
+      run: |
+        # Configure additional substituters if S3 info is provided
+        if [ -n "${{ inputs.s3_bucket }}" ] && [ -n "${{ inputs.s3_endpoint }}" ]; then
+          CACHE_URL="https://${{ inputs.s3_bucket }}.${{ inputs.s3_endpoint }}"
+          echo "Adding $CACHE_URL to Nix substituters"
+
+          # We use NIX_CONFIG environment variable to pass these settings to all subsequent nix commands
+          # This avoids needing sudo to modify /etc/nix/nix.conf
+          EXTRA_SUBSTITUTERS="substituters = https://cache.nixos.org $CACHE_URL"
+
+          if [ -n "${{ inputs.s3_public_key }}" ]; then
+            EXTRA_KEYS="trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ${{ inputs.s3_public_key }}"
+          else
+            # If no public key is provided, we might need to skip-verify (not recommended for production)
+            # Or assume the user has configured trust via other means.
+            EXTRA_KEYS="trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+          fi
+
+          echo "NIX_CONFIG<<EOF" >> "$GITHUB_ENV"
+          echo "$EXTRA_SUBSTITUTERS" >> "$GITHUB_ENV"
+          echo "$EXTRA_KEYS" >> "$GITHUB_ENV"
+          echo "EOF" >> "$GITHUB_ENV"
+        fi
+
+    - name: Setup GitHub Access
+      if: inputs.github_access_token != ''
+      shell: bash
+      run: |
+        # Set up token for private flakes
+        echo "access-tokens = github.com=${{ inputs.github_access_token }}" >> "$GITHUB_ENV"
+
+    - name: Load Environment via Direnv
+      shell: bash
+      run: |
+        # Add Nix to PATH immediately
+        export PATH="/nix/var/nix/profiles/default/bin:/nix/var/nix/profiles/default/sbin:/usr/local/bin:$PATH"
+
+        if ! command -v nix >/dev/null 2>&1; then
+          echo "::error::Nix not found in PATH ($PATH)."
+          exit 1
+        fi
+
+        # Allow direnv to load the flake
+        direnv allow
+
+        # Capture the environment JSON
+        # Note: direnv will automatically use the NIX_CONFIG we set earlier
+        ENV_JSON=$(direnv export json)
+
+        if [ -n "$ENV_JSON" ] && [ "$ENV_JSON" != "{}" ]; then
+          # Export non-PATH variables
+          echo "$ENV_JSON" | jq -r 'to_entries | .[] | select(.key != "PATH") | "\(.key)<<EOF\n\(.value)\nEOF"' >> "$GITHUB_ENV"
+
+          # Export PATH split into individual lines
+          echo "$ENV_JSON" | jq -r 'select(.PATH != null) | .PATH | split(":") | .[]' >> "$GITHUB_PATH"
+          echo "Shared environment successfully loaded from flake."
+        else
+          echo "::error::direnv failed to export environment variables."
+          exit 1
+        fi

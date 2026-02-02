@@ -1,0 +1,47 @@
+name: Build and Push to S3 Cache
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-and-push:
+    strategy:
+      matrix:
+        # system: [x86_64-linux, aarch64-darwin]
+        system: [x86_64-linux]
+    # We assume 'self-hosted-nix' can refer to both Linux and Mac runners,
+    # or that the user has structured their runners to handle these systems.
+    runs-on: self-hosted-nix
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install Nix
+        # Using the standard installer if not already present on the runner
+        uses: cachix/install-nix-action@v25
+        with:
+          nix_path: nixpkgs=channel:nixos-unstable
+
+      - name: Build DevShell
+        run: |
+          # Build the default devShell for the matrix system architecture
+          # This ensures all dependencies are in the local store
+          nix build .#devShells.${{ matrix.system }}.default --no-link
+
+      - name: Push to S3
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.S3_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.S3_SECRET_ACCESS_KEY }}
+          S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }} # e.g., s3.bhs.io.cloud.ovh.net
+          S3_BUCKET: ${{ secrets.S3_BUCKET }}     # e.g., modern-resume-nix-cache
+          S3_REGION: ${{ secrets.S3_REGION }}     # e.g., bhs
+        run: |
+          # Copy all derivations referenced by the devShell to the S3 bucket
+          # We use the 's3' protocol which Nix supports natively.
+          # The query parameters ensure we point to the correct OVH endpoint.
+
+          nix copy --to "s3://$S3_BUCKET?endpoint=$S3_ENDPOINT&region=$S3_REGION" \
+            .#devShells.${{ matrix.system }}.default
