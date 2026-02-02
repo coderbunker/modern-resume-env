@@ -61,8 +61,7 @@ jobs:
           echo "$CACHE_SIGNING_KEY" > cache-priv-key.pem
 
           # Copy and sign all derivations referenced by the devShell to the S3 bucket
-          nix copy --to "s3://$S3_BUCKET?endpoint=$S3_ENDPOINT&region=$S3_REGION" \
-            --sign-with-path cache-priv-key.pem \
+          nix copy --to "s3://$S3_BUCKET?endpoint=$S3_ENDPOINT&region=$S3_REGION&secret-key=$(pwd)/cache-priv-key.pem" \
             .#devShells.${{ matrix.system }}.default
 
           rm cache-priv-key.pem
