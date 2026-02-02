@@ -2,17 +2,36 @@ terraform {
   required_providers {
     ovh = {
       source  = "ovh/ovh"
-      version = "~> 0.38"
+      version = "~> 2.10" # Modern version supporting S3 native resources
     }
     aws = {
       source  = "hashicorp/aws"
-      version = "~> 5.0"
+      version = "~> 6.0"
     }
+  }
+
+  # Once you have run 'tofu apply' once and created the bucket,
+  # you can uncomment this block and run 'tofu init' to migrate
+  # your state to the bucket, making it idempotent across all machines.
+  #
+  backend "s3" {
+     bucket                      = "modern-resume-tofu-state"
+     key                         = "tofu/state.tfstate"
+     region                      = "bhs" # Your OVH region
+     endpoint                    = "https://s3.bhs.io.cloud.ovh.net"
+     skip_credentials_validation = true
+     skip_region_validation      = true
+     skip_metadata_api_check     = true
+     skip_requesting_account_id  = true
+     skip_s3_checksum            = true
   }
 }
 
 provider "ovh" {
-  endpoint = "ovh-ca"
+  endpoint           = "ovh-ca"
+  application_key    = var.application_key
+  application_secret = var.application_secret
+  consumer_key       = var.consumer_key
 }
 
 # AWS provider is used for S3 Object Storage on OVH

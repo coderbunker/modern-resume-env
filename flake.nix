@@ -29,6 +29,7 @@
             --arg gh "$(gh --version | head -n1 | awk '{print $3}')" \
             --arg skopeo "$(skopeo --version | awk '{print $3}')" \
             --arg precommit "$(pre-commit --version | awk '{print $2}')" \
+            --arg ovh "$(ovhcloud-cli version | awk '{print $3}' 2>/dev/null || echo 'N/A')" \
             '{
               bun: $bun,
               node: $node,
@@ -41,7 +42,8 @@
               aws: $aws,
               gh: $gh,
               skopeo: $skopeo,
-              precommit: $precommit
+              precommit: $precommit,
+              ovh: $ovh
             }'
         '';
 
@@ -65,6 +67,27 @@
           exec kubectl exec -it -n "$NAMESPACE" "$POD_NAME" -- "$CMD"
         '';
 
+        ovh-cli-pkg = pkgs.buildGoModule rec {
+          pname = "ovh-cli";
+          version = "0.9.0";
+
+          src = pkgs.fetchFromGitHub {
+            owner = "ovh";
+            repo = "ovhcloud-cli";
+            rev = "v${version}";
+            sha256 = "0kvd2r0ah6zjn0plz3nk7yzn5zmc1df5xfsjlz5f27fpaa62jzvx";
+          };
+
+          vendorHash = "sha256-WNONEceR/cDVloosQ/BMYjPTk9elQ1oTX89lgzENSAI=";
+
+          doCheck = false;
+        };
+
+        tofu-with-plugins = pkgs.opentofu.withPlugins (p: [
+          p.hashicorp_aws
+          p.ovh_ovh
+        ]);
+
       in
       {
         devShells.default = pkgs.mkShell {
@@ -82,7 +105,8 @@
             skopeo
             cosign
             pre-commit
-            opentofu
+            tofu-with-plugins
+            ovh-cli-pkg
 
             # Docker tools
             docker

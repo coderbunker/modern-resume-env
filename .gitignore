@@ -1,0 +1,8 @@
+infra/tofu/.terraform/
+*terraform.tf*
+.terraform*
+.docker-nix/config.json
+.docker-nix/cli-plugins/docker-buildx
+infra/tofu/.docker-nix/config.json
+.gitignore
+infra/tofu/.docker-nix/cli-plugins/docker-buildx
