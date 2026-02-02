@@ -5,12 +5,15 @@ inputs:
   s3_bucket:
     description: 'Name of the S3 bucket for the binary cache'
     required: false
+    default: 'modern-resume-nix-cache'
   s3_endpoint:
     description: 'S3 API endpoint'
     required: false
+    default: 's3.bhs.io.cloud.ovh.net'
   s3_public_key:
     description: 'Public key for verifying signed packages'
     required: false
+    default: 'modern-resume-nix-cache-1:crKOVB7ABh6mDldfa2U9t+aUjQnx9AKeuRAE+/EkNkU='
   github_access_token:
     description: 'GitHub token for accessing private flakes'
     required: false
@@ -24,11 +27,13 @@ runs:
         # Configure additional substituters if S3 info is provided
         if [ -n "${{ inputs.s3_bucket }}" ] && [ -n "${{ inputs.s3_endpoint }}" ]; then
           CACHE_URL="https://${{ inputs.s3_bucket }}.${{ inputs.s3_endpoint }}"
+
           echo "Adding $CACHE_URL to Nix substituters"
 
           # We use NIX_CONFIG environment variable to pass these settings to all subsequent nix commands
           # This avoids needing sudo to modify /etc/nix/nix.conf
           EXTRA_SUBSTITUTERS="substituters = https://cache.nixos.org $CACHE_URL"
+
 
           if [ -n "${{ inputs.s3_public_key }}" ]; then
             EXTRA_KEYS="trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ${{ inputs.s3_public_key }}"

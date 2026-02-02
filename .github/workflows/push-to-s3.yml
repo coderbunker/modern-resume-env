@@ -10,10 +10,8 @@ jobs:
   build-and-push:
     strategy:
       matrix:
-        # system: [x86_64-linux, aarch64-darwin]
-        system: [x86_64-linux]
-    # We assume 'self-hosted-nix' can refer to both Linux and Mac runners,
-    # or that the user has structured their runners to handle these systems.
+        system: [x86_64-linux, aarch64-darwin]
+    # Use the x86_64 host for all builds (requires remote builders or cross-compilation for aarch64-darwin)
     runs-on: self-hosted-nix
     steps:
 
@@ -57,10 +55,14 @@ jobs:
           S3_ENDPOINT: ${{ secrets.S3_ENDPOINT }} # e.g., s3.bhs.io.cloud.ovh.net
           S3_BUCKET: ${{ secrets.S3_BUCKET }}     # e.g., modern-resume-nix-cache
           S3_REGION: ${{ secrets.S3_REGION }}     # e.g., bhs
+          CACHE_SIGNING_KEY: ${{ secrets.CACHE_SIGNING_KEY }}
         run: |
-          # Copy all derivations referenced by the devShell to the S3 bucket
-          # We use the 's3' protocol which Nix supports natively.
-          # The query parameters ensure we point to the correct OVH endpoint.
+          # Write signing key to a temporary file
+          echo "$CACHE_SIGNING_KEY" > cache-priv-key.pem
 
+          # Copy and sign all derivations referenced by the devShell to the S3 bucket
           nix copy --to "s3://$S3_BUCKET?endpoint=$S3_ENDPOINT&region=$S3_REGION" \
+            --sign-with-path cache-priv-key.pem \
             .#devShells.${{ matrix.system }}.default
+
+          rm cache-priv-key.pem
