@@ -68,10 +68,10 @@ jobs:
           # 1. Ensure nix-cache-info exists and is public (enables HTTP reading)
           # Nix copy usually handles this, but explicit upload ensures public ACL for HTTP access
           cat <<EOF > nix-cache-info
-StoreDir: /nix/store
-WantMassQuery: 1
-Priority: 30
-EOF
+          StoreDir: /nix/store
+          WantMassQuery: 1
+          Priority: 30
+          EOF
           nix shell nixpkgs#awscli2 --command bash -c "
             aws --endpoint-url https://$S3_ENDPOINT s3 cp nix-cache-info s3://$S3_BUCKET/nix-cache-info \
               --acl public-read \
