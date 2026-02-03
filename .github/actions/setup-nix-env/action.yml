@@ -27,12 +27,14 @@ runs:
         {
           echo "NIX_CONFIG<<EOF"
 
-          # Add S3 Cache if provided
+          # Add S3 Cache if provided (S3 comes first for priority)
           if [ -n "${{ inputs.s3_bucket }}" ] && [ -n "${{ inputs.s3_endpoint }}" ]; then
             CACHE_URL="https://${{ inputs.s3_bucket }}.${{ inputs.s3_endpoint }}"
-            echo "extra-substituters = $CACHE_URL"
+            echo "substituters = $CACHE_URL https://cache.nixos.org"
             if [ -n "${{ inputs.s3_public_key }}" ]; then
-              echo "extra-trusted-public-keys = ${{ inputs.s3_public_key }}"
+              echo "trusted-public-keys = ${{ inputs.s3_public_key }} cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+            else
+              echo "trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
             fi
           fi
 
