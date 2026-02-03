@@ -44,6 +44,7 @@
             --arg skopeo "$(skopeo --version | awk '{print $3}')" \
             --arg precommit "$(pre-commit --version | awk '{print $2}')" \
             --arg ovh "$(${ovh-cli}/bin/ovhcloud version | awk '{print $3}' 2>/dev/null || echo 'N/A')" \
+            --arg regctl "$(regctl version --format '{{.VCSTag}}' 2>/dev/null || echo 'N/A')" \
             '{
               bun: $bun,
               node: $node,
@@ -57,7 +58,8 @@
               gh: $gh,
               skopeo: $skopeo,
               precommit: $precommit,
-              ovh: $ovh
+              ovh: $ovh,
+              regctl: $regctl
             }'
         '';
 
@@ -84,6 +86,7 @@
             cosign
             pre-commit
             ovh-cli
+            regctl
 
             # Docker tools
             docker
