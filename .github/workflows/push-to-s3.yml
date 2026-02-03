@@ -82,7 +82,16 @@ jobs:
           # 2. Write signing key to a temporary file
           echo "$CACHE_SIGNING_KEY" > cache-priv-key.pem
 
-          # Copy and sign all derivations referenced by the devShell to the S3 bucket
+          # 3. Archive and Copy Flake Inputs (Sources) to S3
+          # 'nix develop' inside Docker needs the source code of inputs (e.g. nixpkgs) to evaluate the flake.
+          # We use 'nix flake archive' to fetch them to the local store and get their paths.
+          nix shell nixpkgs#jq nixpkgs#git --command bash -c "
+            INPUT_PATHS=\$(nix flake archive --json | jq -r '[.. | .path? | strings] | unique | .[]')
+            echo \"Copying flake inputs to S3: \$INPUT_PATHS\"
+            nix copy --to \"s3://$S3_BUCKET?endpoint=$S3_ENDPOINT&region=$S3_REGION&secret-key=$(pwd)/cache-priv-key.pem\" \$INPUT_PATHS
+          "
+
+          # 4. Copy and sign all derivations referenced by the devShell to the S3 bucket
           nix copy --to "s3://$S3_BUCKET?endpoint=$S3_ENDPOINT&region=$S3_REGION&secret-key=$(pwd)/cache-priv-key.pem" \
             .#devShells.${{ matrix.system }}.default
 
