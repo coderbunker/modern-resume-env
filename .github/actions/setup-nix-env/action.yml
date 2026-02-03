@@ -21,40 +21,31 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Configure Nix Cache
+    - name: Configure Nix
       shell: bash
       run: |
-        # Configure additional substituters if S3 info is provided
-        if [ -n "${{ inputs.s3_bucket }}" ] && [ -n "${{ inputs.s3_endpoint }}" ]; then
-          CACHE_URL="https://${{ inputs.s3_bucket }}.${{ inputs.s3_endpoint }}"
+        {
+          echo "NIX_CONFIG<<EOF"
 
-          echo "Adding $CACHE_URL to Nix substituters"
-
-          # We use NIX_CONFIG environment variable to pass these settings to all subsequent nix commands
-          # This avoids needing sudo to modify /etc/nix/nix.conf
-          EXTRA_SUBSTITUTERS="substituters = https://cache.nixos.org $CACHE_URL"
-
-
-          if [ -n "${{ inputs.s3_public_key }}" ]; then
-            EXTRA_KEYS="trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= ${{ inputs.s3_public_key }}"
-          else
-            # If no public key is provided, we might need to skip-verify (not recommended for production)
-            # Or assume the user has configured trust via other means.
-            EXTRA_KEYS="trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY="
+          # Add S3 Cache if provided
+          if [ -n "${{ inputs.s3_bucket }}" ] && [ -n "${{ inputs.s3_endpoint }}" ]; then
+            CACHE_URL="https://${{ inputs.s3_bucket }}.${{ inputs.s3_endpoint }}"
+            echo "extra-substituters = $CACHE_URL"
+            if [ -n "${{ inputs.s3_public_key }}" ]; then
+              echo "extra-trusted-public-keys = ${{ inputs.s3_public_key }}"
+            fi
           fi
 
-          echo "NIX_CONFIG<<EOF" >> "$GITHUB_ENV"
-          echo "$EXTRA_SUBSTITUTERS" >> "$GITHUB_ENV"
-          echo "$EXTRA_KEYS" >> "$GITHUB_ENV"
-          echo "EOF" >> "$GITHUB_ENV"
-        fi
+          # Add GitHub Access Token if provided
+          if [ -n "${{ inputs.github_access_token }}" ]; then
+            echo "access-tokens = github.com=${{ inputs.github_access_token }}"
+          fi
 
-    - name: Setup GitHub Access
-      if: inputs.github_access_token != ''
-      shell: bash
-      run: |
-        # Set up token for private flakes
-        echo "access-tokens = github.com=${{ inputs.github_access_token }}" >> "$GITHUB_ENV"
+          # Experimental features (needed for flakes)
+          echo "experimental-features = nix-command flakes"
+
+          echo "EOF"
+        } >> "$GITHUB_ENV"
 
     - name: Load Environment via Direnv
       shell: bash
