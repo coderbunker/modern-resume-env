@@ -14,6 +14,20 @@
           config.allowUnfree = true;
         };
 
+        # Infrastructure packages
+        ovh-cli = pkgs.buildGoModule rec {
+          pname = "ovhcloud-cli";
+          version = "0.9.0";
+          src = pkgs.fetchFromGitHub {
+            owner = "ovh";
+            repo = "ovhcloud-cli";
+            rev = "v${version}";
+            sha256 = "0kvd2r0ah6zjn0plz3nk7yzn5zmc1df5xfsjlz5f27fpaa62jzvx";
+          };
+          vendorHash = "sha256-WNONEceR/cDVloosQ/BMYjPTk9elQ1oTX89lgzENSAI=";
+          doCheck = false;
+        };
+
         # Standard Version Script (Public)
         baseVersions = pkgs.writeShellScriptBin "versions" ''
           jq -n \
@@ -29,6 +43,7 @@
             --arg gh "$(gh --version | head -n1 | awk '{print $3}')" \
             --arg skopeo "$(skopeo --version | awk '{print $3}')" \
             --arg precommit "$(pre-commit --version | awk '{print $2}')" \
+            --arg ovh "$(${ovh-cli}/bin/ovhcloud version | awk '{print $3}' 2>/dev/null || echo 'N/A')" \
             '{
               bun: $bun,
               node: $node,
@@ -41,7 +56,8 @@
               aws: $aws,
               gh: $gh,
               skopeo: $skopeo,
-              precommit: $precommit
+              precommit: $precommit,
+              ovh: $ovh
             }'
         '';
 
@@ -49,6 +65,7 @@
       {
         packages = {
           versions = baseVersions;
+          ovhcloud-cli = ovh-cli;
         };
 
         devShells.default = pkgs.mkShell {
@@ -66,6 +83,7 @@
             skopeo
             cosign
             pre-commit
+            ovh-cli
 
             # Docker tools
             docker
