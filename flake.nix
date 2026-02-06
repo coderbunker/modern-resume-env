@@ -100,6 +100,7 @@
             shfmt
             markdownlint-cli
             nixpkgs-fmt
+            tflint
 
             # Database / Misc
             postgresql
