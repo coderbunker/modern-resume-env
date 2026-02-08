@@ -133,6 +133,9 @@
               fi
             fi
 
+            # Setup git hooks
+            ${builtins.toString ./scripts/setup-hooks.sh}
+
             log_interactive "\033[1;32mModern Resume Shared Environment Loaded\033[0m"
           '';
         };
