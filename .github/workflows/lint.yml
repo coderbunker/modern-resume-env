@@ -1,0 +1,25 @@
+name: Lint
+
+on:
+  push:
+    branches: ["main"]
+  pull_request:
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: cachix/install-nix-action@v27
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Setup Cache
+        uses: ./.github/actions/setup-nix-env
+        with:
+          s3_access_key_id: ${{ secrets.S3_ACCESS_KEY_ID }}
+          s3_secret_key: ${{ secrets.S3_SECRET_KEY }}
+
+      - name: Run pre-commit
+        run: nix develop --command pre-commit run --all-files
