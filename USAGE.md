@@ -29,18 +29,23 @@ Since Cachix is paid, you can use **GHCR.io** or a **Harbor** instance as a bina
 ### Using OCI Registries as a Cache (Nix 2.19+)
 
 Nix has experimental support for OCI registries. To enable it, ensure your `nix.conf` contains:
+
 ```conf
 experimental-features = nix-command flakes oci-store
 ```
 
 #### Pushing to the Cache (in CI)
+
 You can push your build results to GHCR:
+
 ```bash
 nix copy --to "oci://ghcr.io/your-org/modern-resume-cache" .#devShells.x86_64-linux.default
 ```
 
 #### Pulling from the Cache
+
 When someone else runs `nix develop`, they can use your OCI registry as a substituter:
+
 ```bash
 nix develop --substituters "https://ghcr.io/your-org/modern-resume-cache" --trusted-public-keys "..."
 ```
@@ -50,10 +55,13 @@ nix develop --substituters "https://ghcr.io/your-org/modern-resume-cache" --trus
 ## 3. Local Development
 
 Simply run:
+
 ```bash
 nix develop
 ```
+
 Or if you use `direnv`, create an `.envrc` file:
+
 ```bash
 use flake github:coderbunker/modern-resume-env
 ```

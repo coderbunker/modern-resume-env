@@ -45,6 +45,7 @@
             --arg precommit "$(pre-commit --version | awk '{print $2}')" \
             --arg ovh "$(${ovh-cli}/bin/ovhcloud version | awk '{print $3}' 2>/dev/null || echo 'N/A')" \
             --arg regctl "$(regctl version --format '{{.VCSTag}}' 2>/dev/null || echo 'N/A')" \
+            --arg kubeconform "$(kubeconform -v | awk '{print $2}' 2>/dev/null || echo 'N/A')" \
             '{
               bun: $bun,
               node: $node,
@@ -59,7 +60,8 @@
               skopeo: $skopeo,
               precommit: $precommit,
               ovh: $ovh,
-              regctl: $regctl
+              regctl: $regctl,
+              kubeconform: $kubeconform
             }'
         '';
 
@@ -87,6 +89,7 @@
             pre-commit
             ovh-cli
             regctl
+            kubeconform
 
             # Docker tools
             docker
@@ -110,7 +113,7 @@
 
             # Shared Helpers
             self.packages.${system}.versions
-          ] ++ (if system == "aarch64-darwin" || system == "x86_64-darwin" then [] else [
+          ] ++ (if system == "aarch64-darwin" || system == "x86_64-darwin" then [ ] else [
             stdenv.cc.cc.lib
             glibc
           ]);

@@ -5,6 +5,7 @@ This repository centralizes the development environment for both the frontend an
 ## Overview
 
 By using a centralized `flake.nix`, we ensure:
+
 - **Consistency**: The same versions of Node.js, Bun, Kubectl, and other tools are used across all repositories.
 - **Maintainability**: Dependency updates only need to be managed in one place.
 - **Portability**: Developers can load the environment via `direnv` or `nix develop` without worrying about local setup.

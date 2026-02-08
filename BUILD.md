@@ -24,9 +24,11 @@ To enable the push (caching) workflow, set the following Secrets in this GitHub 
 ## 3. Using the Cache
 
 ### Automatic (GitHub Actions)
+
 The custom action `./.github/actions/setup-nix-env` automatically configures the cache using the public bucket URL and the public signing key.
 
 ### Local Use
+
 To benefit from the cache on your local machine, add the following to your `nix.conf` (usually `/etc/nix/nix.conf` or `~/.config/nix/nix.conf`):
 
 ```conf
@@ -36,15 +38,17 @@ trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDS
 
 ## 4. Security Model
 
-1.  **Public Read**: Anyone can pull binaries. This saves build time for all contributors.
-2.  **Signed Write**: Only the GitHub workflow (holding the `CACHE_SIGNING_KEY`) can sign packages.
-3.  **Verification**: Even though the bucket is public, Nix will **reject** any package that isn't signed by our private key, preventing malicious injections.
+1. **Public Read**: Anyone can pull binaries. This saves build time for all contributors.
+2. **Signed Write**: Only the GitHub workflow (holding the `CACHE_SIGNING_KEY`) can sign packages.
+3. **Verification**: Even though the bucket is public, Nix will **reject** any package that isn't signed by our private key, preventing malicious injections.
 
 ## 5. Generating Keys (Reference)
 
 If you need to rotate the signing keys:
+
 ```bash
 nix-store --generate-binary-cache-key modern-resume-nix-cache-1 cache-priv-key cache-pub-key
 ```
+
 1. Update `CACHE_SIGNING_KEY` secret with `cache-priv-key`.
 2. Update the default `s3_public_key` in `.github/actions/setup-nix-env/action.yml` with `cache-pub-key`.
