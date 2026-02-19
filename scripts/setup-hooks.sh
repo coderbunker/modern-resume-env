@@ -30,6 +30,11 @@ if [ -d ".git" ]; then
 if command -v direnv >/dev/null 2>&1; then
     eval "\$(direnv export bash)"
 fi
+# Disable pre-commit color output to avoid openpty() calls.
+# On macOS, sandboxed terminals (e.g. Antigravity) restrict PTY allocation,
+# causing "PermissionError: Operation not permitted" in pre-commit's Pty() helper.
+# Setting color=never makes pre-commit use plain subprocess pipes instead.
+export PRE_COMMIT_COLOR=never
 EOF
 
 			# Append the original content, skipping the first line (shebang)
