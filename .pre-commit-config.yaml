@@ -37,3 +37,4 @@ repos:
         entry: markdownlint --fix
         language: system
         types: [markdown]
+        exclude: ^CHANGELOG\.md$
