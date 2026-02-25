@@ -90,6 +90,8 @@
             ovh-cli
             regctl
             kubeconform
+            sops
+            age
 
             # Docker tools
             docker
