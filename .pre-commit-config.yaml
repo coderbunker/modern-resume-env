@@ -37,3 +37,9 @@ repos:
         entry: markdownlint --fix
         language: system
         types: [markdown]
+        exclude: ^CHANGELOG\.md$
+      - id: hadolint
+        name: hadolint
+        entry: hadolint
+        language: system
+        types: [dockerfile]

@@ -90,6 +90,8 @@
             ovh-cli
             regctl
             kubeconform
+            sops
+            age
 
             # Docker tools
             docker
@@ -102,6 +104,7 @@
             shellcheck
             shfmt
             markdownlint-cli
+            hadolint
             nixpkgs-fmt
 
             # Database / Misc
