@@ -104,6 +104,7 @@
             shellcheck
             shfmt
             markdownlint-cli
+            hadolint
             nixpkgs-fmt
 
             # Database / Misc
