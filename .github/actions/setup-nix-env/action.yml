@@ -60,6 +60,13 @@ runs:
           exit 1
         fi
 
+        # Install direnv if not present
+        if ! command -v direnv >/dev/null 2>&1; then
+          echo "Installing direnv..."
+          nix profile install nixpkgs#direnv --extra-experimental-features "nix-command flakes"
+          export PATH="$HOME/.nix-profile/bin:$PATH"
+        fi
+
         # Allow direnv to load the flake
         direnv allow
 
