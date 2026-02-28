@@ -25,7 +25,17 @@ on:
 jobs:
   lint-test:
     name: Lint & Test
-    # ... call reusable lint/test actions ...
+    runs-on: self-hosted-nix
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: coderbunker/modern-resume-env/.github/actions/setup-env@main
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Lint
+        run: pre-commit run --all-files
+      - name: Run Test
+        run: bun run test
 
   release:
     uses: coderbunker/modern-resume-env/.github/workflows/semantic-release.yml@main

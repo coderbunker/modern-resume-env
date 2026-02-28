@@ -5,32 +5,30 @@ We aim for consistent, fast, and unified linting across all repositories in the 
 ## 核心理念 (Core Philosophy)
 
 1. **Centralized Rules**: Base linting rules are defined in `modern-resume-env`.
-2. **Local/CI Parity**: Linting runs identically on a developer's machine via `pre-commit` and in GitHub Actions via our reusable `lint-action`.
-3. **Automatic Detection**: We rely on `pre-commit`'s built-in file type detection (`types`, `files`, `exclude`) to run only the relevant hooks.
-4. **Smart Execution**: Only run relevant linters based on the files that changed.
+2. **Local/CI Parity**: Linting runs identically on a developer's machine via `pre-commit` and in GitHub Actions via `setup-env`.
+3. **Automatic Detection**: We rely on `pre-commit`'s built-in file type detection to run only the relevant hooks.
+4. **Setup Once Pattern**: Environment initialization (Nix + Bun) is handled once per job via `setup-env`.
 
-## ⚙️ How it works: `lint-action`
+## ⚙️ How it works: `setup-env` + `pre-commit`
 
-The `lint-action` in `modern-resume-env` is a thin wrapper around `pre-commit` that ensures the environment is correctly set up with Nix before running.
+Instead of thin wrappers, we use the `setup-env` action to prepare the environment and then run `pre-commit` directly. This is more transparent and efficient for multi-step jobs.
 
 ### Usage in a repository
 
 ```yaml
-- name: Lint
-  uses: coderbunker/modern-resume-env/.github/actions/lint-action@main
+jobs:
+  lint:
+    runs-on: self-hosted-nix
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup Environment
+        uses: coderbunker/modern-resume-env/.github/actions/setup-env@main
+        with:
+          install_deps: true # Only if you have local hooks like eslint
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run pre-commit
+        run: pre-commit run --all-files
 ```
-
-### Hook Selection
-
-The `.pre-commit-config.yaml` defines which hooks run for which file types. For example:
-
-- **Shell scripts**: `shellcheck`, `shfmt`.
-- **Dockerfiles**: `hadolint`.
-- **Markdown**: `markdownlint`.
-- **YAML/Kubernetes**: `yamllint`, `kubeconform`.
-- **GitHub Actions**: `actionlint`.
-
-If a repository does not contain a specific file type (e.g., no Dockerfiles), `pre-commit` will automatically skip the corresponding hooks. No manual "features" list is required.
 
 ## 🛠️ Local Setup
 
@@ -44,8 +42,8 @@ pre-commit install
 
 ## 🧠 Implementation Detail
 
-The `lint-action` will:
+The `setup-env` action will:
 
 1. Setup the Nix environment via `setup-nix-env`.
-2. Run `pre-commit run --all-files` (or `--from-ref` for PRs).
-3. Fail the build if any hooks fail or modify files.
+2. Configure `.npmrc` and run `bun install` (via `setup-bun-env`).
+3. Handle authentication for private flakes/packages.
