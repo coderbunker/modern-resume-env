@@ -105,6 +105,7 @@
             shfmt
             markdownlint-cli
             hadolint
+            actionlint
             nixpkgs-fmt
 
             # Database / Misc

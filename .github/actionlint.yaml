@@ -1,0 +1,4 @@
+# .actionlint.yaml
+self-hosted-runner:
+  labels:
+    - self-hosted-nix

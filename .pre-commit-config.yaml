@@ -43,3 +43,8 @@ repos:
         entry: hadolint
         language: system
         types: [dockerfile]
+      - id: actionlint
+        name: actionlint
+        entry: actionlint
+        language: system
+        files: ^\.github/workflows/

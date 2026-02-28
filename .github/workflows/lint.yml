@@ -17,9 +17,6 @@ jobs:
 
       - name: Setup Cache
         uses: ./.github/actions/setup-nix-env
-        with:
-          s3_access_key_id: ${{ secrets.S3_ACCESS_KEY_ID }}
-          s3_secret_key: ${{ secrets.S3_SECRET_KEY }}
 
       - name: Run pre-commit
         run: nix develop --command pre-commit run --all-files
