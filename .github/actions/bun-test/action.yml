@@ -1,0 +1,34 @@
+name: Bun Test Action
+description: Reusable action to run bun tests.
+
+inputs:
+  install_cmd:
+    description: "Command to install dependencies"
+    required: false
+    default: "bun install --frozen-lockfile"
+  test_cmd:
+    description: "Command to run tests"
+    required: false
+    default: "bun run test"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Nix Environment
+      uses: coderbunker/modern-resume-env/.github/actions/setup-nix-env@main
+
+    - name: Setup GitHub Packages authentication
+      shell: bash
+      run: |
+        if [ -n "$GITHUB_TOKEN" ]; then
+          echo "@coderbunker:registry=https://npm.pkg.github.com" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" >> .npmrc
+        fi
+
+    - name: Install dependencies
+      shell: bash
+      run: ${{ inputs.install_cmd }}
+
+    - name: Run tests
+      shell: bash
+      run: ${{ inputs.test_cmd }}

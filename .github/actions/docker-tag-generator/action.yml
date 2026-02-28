@@ -1,0 +1,49 @@
+name: Docker Tag Generator
+description: Generates standardized Docker tags based on the tagging policy.
+
+inputs:
+  new_release_version:
+    description: "Semantic version determined by semantic-release"
+    required: false
+  is_new_release:
+    description: "Whether a new release was published"
+    required: false
+    default: "false"
+
+outputs:
+  tags:
+    description: "Generated tags for docker/metadata-action"
+    value: ${{ steps.gen.outputs.tags }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Generate Tags
+      id: gen
+      shell: bash
+      run: |
+        TAGS=""
+
+        # 1. Semantic Release Tag (Stable)
+        if [[ "${{ inputs.is_new_release }}" == "true" ]]; then
+          TAGS="type=raw,value=${{ inputs.new_release_version }}\n$TAGS"
+          TAGS="type=raw,value=latest-prod\n$TAGS"
+        fi
+
+        # 2. Develop Branch Tag
+        if [[ "${{ github.ref_name }}" == "develop" ]]; then
+          TAGS="type=raw,value=develop-build-${{ github.run_number }}\n$TAGS"
+          TAGS="type=raw,value=latest-staging\n$TAGS"
+        fi
+
+        # 3. Pull Request Tag
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          TAGS="type=raw,value=pr-${{ github.event.pull_request.number }}-build-${{ github.run_number }}\n$TAGS"
+        fi
+
+        # 4. Git SHA (Always)
+        TAGS="type=sha,format=short\n$TAGS"
+
+        echo "tags<<EOF" >> "$GITHUB_OUTPUT"
+        echo -e "$TAGS" >> "$GITHUB_OUTPUT"
+        echo "EOF" >> "$GITHUB_OUTPUT"

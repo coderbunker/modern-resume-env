@@ -1,0 +1,14 @@
+name: Lint Action
+description: Reusable linting action using pre-commit and Nix.
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup Nix Environment
+      uses: coderbunker/modern-resume-env/.github/actions/setup-nix-env@main
+
+    - name: Run pre-commit
+      shell: bash
+      run: |
+        # pre-commit automatically detects file types and runs only relevant hooks
+        pre-commit run --all-files

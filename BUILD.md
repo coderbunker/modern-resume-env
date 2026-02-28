@@ -25,7 +25,7 @@ To enable the push (caching) workflow, set the following Secrets in this GitHub 
 
 ### Automatic (GitHub Actions)
 
-The custom action `./.github/actions/setup-nix-env` automatically configures the cache using the public bucket URL and the public signing key.
+The custom action `coderbunker/modern-resume-env/.github/actions/setup-nix-env@main` automatically configures the cache using the public bucket URL and the public signing key.
 
 ### Local Use
 
