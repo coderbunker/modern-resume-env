@@ -7,145 +7,145 @@
   };
 
   outputs = { self, nixpkgs, flake-utils }:
-    flake-utils.lib.eachDefaultSystem (system:
-      let
-        pkgs = import nixpkgs {
-          inherit system;
-          config.allowUnfree = true;
-        };
-
-        # Infrastructure packages
-        ovh-cli = pkgs.buildGoModule rec {
-          pname = "ovhcloud-cli";
-          version = "0.9.0";
-          src = pkgs.fetchFromGitHub {
-            owner = "ovh";
-            repo = "ovhcloud-cli";
-            rev = "v${version}";
-            sha256 = "0kvd2r0ah6zjn0plz3nk7yzn5zmc1df5xfsjlz5f27fpaa62jzvx";
+    let
+      # system-specific outputs
+      eachSystem = flake-utils.lib.eachDefaultSystem (system:
+        let
+          pkgs = import nixpkgs {
+            inherit system;
+            config.allowUnfree = true;
           };
-          vendorHash = "sha256-WNONEceR/cDVloosQ/BMYjPTk9elQ1oTX89lgzENSAI=";
-          doCheck = false;
-        };
 
-        # Standard Version Script (Public)
-        baseVersions = pkgs.writeShellScriptBin "versions" ''
-          jq -n \
-            --arg bun "$(bun --version)" \
-            --arg node "$(node --version | sed 's/^v//')" \
-            --arg go "$(go version | awk '{print $3}' | sed 's/^go//' 2>/dev/null || echo 'N/A')" \
-            --arg postgres "$(psql --version | awk '{print $3}' 2>/dev/null || echo 'N/A')" \
-            --arg docker "$(docker --version | awk '{print $3}' | sed 's/,//' 2>/dev/null || echo 'N/A')" \
-            --arg compose "$(docker compose version --short 2>/dev/null || echo 'N/A')" \
-            --arg kubectl "$(kubectl version --client --output=json 2>/dev/null | jq -r ".clientVersion.gitVersion" || echo 'N/A')" \
-            --arg helm "$(helm version --short 2>/dev/null || echo 'N/A')" \
-            --arg aws "$(aws --version 2>&1 | awk '{print $1}' | cut -d/ -f2 2>/dev/null || echo 'N/A')" \
-            --arg gh "$(gh --version | head -n1 | awk '{print $3}')" \
-            --arg skopeo "$(skopeo --version | awk '{print $3}')" \
-            --arg precommit "$(pre-commit --version | awk '{print $2}')" \
-            --arg ovh "$(${ovh-cli}/bin/ovhcloud version | awk '{print $3}' 2>/dev/null || echo 'N/A')" \
-            --arg regctl "$(regctl version --format '{{.VCSTag}}' 2>/dev/null || echo 'N/A')" \
-            --arg kubeconform "$(kubeconform -v | awk '{print $2}' 2>/dev/null || echo 'N/A')" \
-            '{
-              bun: $bun,
-              node: $node,
-              go: $go,
-              postgres: $postgres,
-              docker: $docker,
-              compose: $compose,
-              kubectl: $kubectl,
-              helm: $helm,
-              aws: $aws,
-              gh: $gh,
-              skopeo: $skopeo,
-              precommit: $precommit,
-              ovh: $ovh,
-              regctl: $regctl,
-              kubeconform: $kubeconform
-            }'
-        '';
+          # Infrastructure packages
+          ovhcloud = pkgs.buildGoModule rec {
+            pname = "ovhcloud-cli";
+            version = "0.9.0";
+            src = pkgs.fetchFromGitHub {
+              owner = "ovh";
+              repo = "ovhcloud-cli";
+              rev = "v${version}";
+              sha256 = "0kvd2r0ah6zjn0plz3nk7yzn5zmc1df5xfsjlz5f27fpaa62jzvx";
+            };
+            vendorHash = "sha256-WNONEceR/cDVloosQ/BMYjPTk9elQ1oTX89lgzENSAI=";
+            ldflags = [ "-X github.com/ovh/ovhcloud-cli/internal/version.Version=${version}" ];
+            doCheck = false;
+          };
 
-      in
-      {
-        packages = {
-          versions = baseVersions;
-          ovhcloud-cli = ovh-cli;
-        };
+          # Package Groups for mixing and matching
+          pkgsGroup = {
+            core = [
+              pkgs.direnv
+              pkgs.tree
+              pkgs.jq
+              pkgs.gettext
+              pkgs.bc
+              pkgs.openssl
+            ];
 
-        devShells.default = pkgs.mkShell {
-          buildInputs = with pkgs; [
-            # Runtime
-            bun
-            nodejs_24
-            go
+            runtime = [
+              pkgs.bun
+              pkgs.nodejs_24
+              pkgs.go
+              pkgs.python3
+            ];
 
-            # CI/CD & Deployment Tools
-            kubectl
-            kubernetes-helm
-            awscli2
-            gh
-            skopeo
-            cosign
-            pre-commit
-            ovh-cli
-            regctl
-            kubeconform
-            sops
-            age
+            cicd = [
+              pkgs.awscli2
+              pkgs.gh
+              pkgs.skopeo
+              pkgs.cosign
+              pkgs.pre-commit
+              ovhcloud
+              pkgs.regctl
+              pkgs.kubeconform
+              pkgs.sops
+              pkgs.age
+              pkgs.yq-go
+              pkgs.rclone
+            ];
 
-            # Docker tools
-            docker
-            docker-compose
-            docker-buildx
+            docker = [
+              pkgs.docker
+              pkgs.docker-compose
+              pkgs.docker-buildx
+            ];
 
-            # Linting & Formatting
-            jq
-            yamllint
-            shellcheck
-            shfmt
-            markdownlint-cli
-            hadolint
-            actionlint
-            nixpkgs-fmt
+            lint = [
+              pkgs.yamllint
+              pkgs.shellcheck
+              pkgs.shfmt
+              pkgs.markdownlint-cli
+              pkgs.hadolint
+              pkgs.actionlint
+              pkgs.nixpkgs-fmt
+              pkgs.eslint
+            ];
 
-            # Database / Misc
-            postgresql
-            openssl
-            gettext
-            bc
-            dnsutils
+            db = [
+              pkgs.postgresql
+              pkgs.dnsutils
+            ];
+          };
 
-            # Shared Helpers
-            self.packages.${system}.versions
-          ] ++ (if system == "aarch64-darwin" || system == "x86_64-darwin" then [ ] else [
-            stdenv.cc.cc.lib
-            glibc
-          ]);
+          allPkgs = pkgsGroup.core
+            ++ pkgsGroup.runtime
+            ++ pkgsGroup.cicd
+            ++ pkgsGroup.docker
+            ++ pkgsGroup.lint
+            ++ pkgsGroup.db;
 
-          shellHook = ''
-            # Helper for interactive logging
-            log_interactive() {
-              if [ -t 1 ]; then echo -e "$@" >&2; fi
-            }
-
-            # Setup docker-buildx plugin
-            export DOCKER_CONFIG="$PWD/.docker-nix"
-            mkdir -p "$DOCKER_CONFIG/cli-plugins"
-            ln -sf "${pkgs.docker-buildx}/bin/docker-buildx" "$DOCKER_CONFIG/cli-plugins/docker-buildx"
-
-            # Automatic KUBECONFIG discovery
-            if [ -z "$KUBECONFIG" ]; then
-              if [ -f "$PWD/kubeconfig.yaml" ]; then export KUBECONFIG="$PWD/kubeconfig.yaml"
-              elif [ -f "$PWD/kubeconfig.yml" ]; then export KUBECONFIG="$PWD/kubeconfig.yml"
-              fi
-            fi
-
-            # Setup git hooks
-            ${builtins.toString ./scripts/setup-hooks.sh}
-
-            log_interactive "\033[1;32mModern Resume Shared Environment Loaded\033[0m"
+          # Standard Version Script (Public) - Now dynamic
+          baseVersions = pkgs.writeShellScriptBin "versions" ''
+            ${pkgs.bash}/bin/bash ${./scripts/versions.sh}
           '';
-        };
-      }
-    );
+
+        in
+        {
+          packages = {
+            versions = baseVersions;
+            ovhcloud = ovhcloud;
+          };
+
+          devShells.default = pkgs.mkShell {
+            buildInputs = allPkgs ++ [
+              self.packages.${system}.versions
+            ] ++ (if system == "aarch64-darwin" || system == "x86_64-darwin" then [ ] else [
+              pkgs.stdenv.cc.cc.lib
+              pkgs.glibc
+            ]);
+
+            shellHook = ''
+              # Helper for interactive logging
+              log_interactive() {
+                if [ -t 1 ]; then echo -e "$@" >&2; fi
+              }
+
+              # Setup docker-buildx plugin
+              export DOCKER_CONFIG="$PWD/.docker-nix"
+              mkdir -p "$DOCKER_CONFIG/cli-plugins"
+              ln -sf "${pkgs.docker-buildx}/bin/docker-buildx" "$DOCKER_CONFIG/cli-plugins/docker-buildx"
+
+              # Automatic KUBECONFIG discovery
+              if [ -z "$KUBECONFIG" ]; then
+                if [ -f "$PWD/kubeconfig.yaml" ]; then export KUBECONFIG="$PWD/kubeconfig.yaml"
+                elif [ -f "$PWD/kubeconfig.yml" ]; then export KUBECONFIG="$PWD/kubeconfig.yml"
+                fi
+              fi
+
+              # Setup git hooks
+              ${builtins.toString ./scripts/setup-hooks.sh}
+
+              log_interactive "\033[1;32mModern Resume Shared Environment Loaded\033[0m"
+            '';
+          };
+
+          # Export lib inside each system too
+          lib.pkgsGroup = pkgsGroup;
+        }
+      );
+    in
+    eachSystem // {
+      # Top-level lib for easier access
+      lib = eachSystem.lib;
+    };
 }
