@@ -48,7 +48,7 @@ jobs:
           images: ${{ inputs.image_name }}
           # The rules defined in the Tagging Policy
           tags: |
-            type=raw,value=${{ inputs.version }},enable=${{ inputs.is_new_release == true }}
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.is_new_release == 'true' }}
             type=raw,value=develop-build-${{ github.run_number }},enable=${{ github.ref_name == 'develop' }}
             type=raw,value=pr-${{ github.event.pull_request.number }}-build-${{ github.run_number }},enable=${{ github.event_name == 'pull_request' }}
             type=sha,format=short
