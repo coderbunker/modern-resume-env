@@ -10,20 +10,10 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Setup Nix Environment
-      uses: coderbunker/modern-resume-env/.github/actions/setup-nix-env@main
-
-    - name: Install dependencies
-      if: inputs.install_deps == 'true'
-      shell: bash
-      run: |
-        if [ -f "bun.lockb" ]; then
-          bun install --frozen-lockfile
-        elif [ -f "package-lock.json" ]; then
-          npm ci
-        elif [ -f "package.json" ]; then
-          npm install
-        fi
+    - name: Setup Environment
+      uses: coderbunker/modern-resume-env/.github/actions/setup-env@main
+      with:
+        install_deps: ${{ inputs.install_deps }}
 
     - name: Run pre-commit
       shell: bash

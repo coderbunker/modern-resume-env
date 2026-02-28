@@ -1,0 +1,35 @@
+name: Setup Bun Environment
+description: Configures npm registry authentication and optionally installs dependencies.
+
+inputs:
+  install_deps:
+    description: "Whether to install dependencies"
+    required: false
+    default: "true"
+  install_cmd:
+    description: "Command to install dependencies"
+    required: false
+    default: "bun install --frozen-lockfile"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Setup GitHub Packages authentication
+      shell: bash
+      run: |
+        if [ -n "$GITHUB_TOKEN" ]; then
+          echo "@coderbunker:registry=https://npm.pkg.github.com" > .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" >> .npmrc
+        fi
+
+    - name: Install dependencies
+      if: inputs.install_deps == 'true'
+      shell: bash
+      run: |
+        if [ -f "bun.lockb" ]; then
+          bun install --frozen-lockfile
+        elif [ -f "package-lock.json" ]; then
+          npm ci
+        elif [ -f "package.json" ]; then
+          npm install
+        fi

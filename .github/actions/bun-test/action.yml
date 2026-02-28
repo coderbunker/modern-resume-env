@@ -14,20 +14,10 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Setup Nix Environment
-      uses: coderbunker/modern-resume-env/.github/actions/setup-nix-env@main
-
-    - name: Setup GitHub Packages authentication
-      shell: bash
-      run: |
-        if [ -n "$GITHUB_TOKEN" ]; then
-          echo "@coderbunker:registry=https://npm.pkg.github.com" > .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" >> .npmrc
-        fi
-
-    - name: Install dependencies
-      shell: bash
-      run: ${{ inputs.install_cmd }}
+    - name: Setup Environment
+      uses: coderbunker/modern-resume-env/.github/actions/setup-env@main
+      with:
+        install_cmd: ${{ inputs.install_cmd }}
 
     - name: Run tests
       shell: bash
