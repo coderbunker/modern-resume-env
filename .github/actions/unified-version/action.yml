@@ -28,6 +28,10 @@ outputs:
 runs:
   using: "composite"
   steps:
+    - name: Provision NPM for Cycjimmy via Bun
+      shell: bash
+      run: bun install -g npm
+
     - name: Run Semantic Release
       id: semantic
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
