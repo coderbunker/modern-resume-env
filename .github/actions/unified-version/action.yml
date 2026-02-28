@@ -1,0 +1,57 @@
+name: Unified Versioning
+description: Consolidates semantic-release and manual version determination into a single action.
+
+inputs:
+  extra_plugins:
+    required: false
+    type: string
+    description: "Extra plugins for semantic-release"
+  dry_run:
+    required: false
+    type: boolean
+    default: false
+    description: "Whether to run semantic-release in dry-run mode"
+  github_token:
+    required: false
+    type: string
+    description: "GitHub token for semantic-release"
+    default: ${{ github.token }}
+
+outputs:
+  version:
+    description: "The determined version string"
+    value: ${{ steps.final_version.outputs.version }}
+  new_release_published:
+    description: "Whether a new semantic release was published"
+    value: ${{ steps.semantic.outputs.new_release_published || 'false' }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Run Semantic Release
+      id: semantic
+      if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      uses: cycjimmy/semantic-release-action@v4
+      with:
+        extra_plugins: ${{ inputs.extra_plugins }}
+        dry_run: ${{ inputs.dry_run }}
+      env:
+        GITHUB_TOKEN: ${{ inputs.github_token }}
+
+    - name: Get Fallback Version
+      id: fallback
+      if: steps.semantic.outputs.new_release_published != 'true'
+      uses: coderbunker/modern-resume-env/.github/actions/get-version@main
+
+    - name: Determine Final Version
+      id: final_version
+      shell: bash
+      run: |
+        if [[ "${{ steps.semantic.outputs.new_release_published }}" == "true" ]]; then
+          VERSION="${{ steps.semantic.outputs.new_release_version }}"
+          echo "Using Semantic Release Version: $VERSION"
+        else
+          VERSION="${{ steps.fallback.outputs.version }}"
+          echo "Using Fallback Version: $VERSION"
+        fi
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"

@@ -22,7 +22,12 @@ runs:
         github-token: ${{ inputs.github_token }}
         script: |
           const { owner, repo } = context.repo;
-          const result = '${{ inputs.build_result }}' === 'success' ? '✅ **Success**' : '❌ **Failed**';
+          const buildResult = '${{ inputs.build_result }}';
+          let result = '❓ **Unknown**';
+          if (buildResult === 'success') result = '✅ **Success**';
+          else if (buildResult === 'failure') result = '❌ **Failed**';
+          else if (buildResult === 'skipped') result = '⏭️ **Skipped**';
+          else if (buildResult === 'cancelled') result = '🚫 **Cancelled**';
           const version = '${{ inputs.version }}';
 
           // Only post on PRs

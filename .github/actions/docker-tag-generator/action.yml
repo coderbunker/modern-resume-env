@@ -41,8 +41,16 @@ runs:
           TAGS="type=raw,value=pr-${{ github.event.pull_request.number }}-build-${{ github.run_number }}\n$TAGS"
         fi
 
-        # 4. Git SHA (Always)
-        TAGS="type=sha,format=short\n$TAGS"
+        # 4. Git SHA (Always) - Use sha- prefix as per policy
+        SHORT_SHA=$(git rev-parse --short HEAD)
+        TAGS="type=raw,value=sha-${SHORT_SHA}\n$TAGS"
+
+        # 5. Build Number (Always)
+        TAGS="type=raw,value=build-${{ github.run_number }}\n$TAGS"
+
+        # 6. Date Tag (Always)
+        DATE_TAG=$(date +'%Y-%m-%d')
+        TAGS="type=raw,value=${DATE_TAG}\n$TAGS"
 
         echo "tags<<EOF" >> "$GITHUB_OUTPUT"
         echo -e "$TAGS" >> "$GITHUB_OUTPUT"

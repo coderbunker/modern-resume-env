@@ -1,0 +1,27 @@
+name: Get Project Version
+description: Determines the project version from package.json with PR/Develop suffixes.
+
+outputs:
+  version:
+    description: "The determined version string"
+    value: ${{ steps.version.outputs.version }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Determine Version
+      id: version
+      shell: bash
+      run: |
+        SHORT_SHA=$(git rev-parse --short HEAD)
+
+        if [[ "${{ github.event_name }}" == "pull_request" ]]; then
+          VERSION="pr-${{ github.event.pull_request.number }}-build-${{ github.run_number }}"
+        elif [[ "${{ github.ref_name }}" == "develop" ]]; then
+          VERSION="develop-build-${{ github.run_number }}"
+        else
+          VERSION="sha-${SHORT_SHA}"
+        fi
+
+        echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+        echo "Determined version: $VERSION"
