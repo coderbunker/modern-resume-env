@@ -86,4 +86,5 @@ jobs:
           build-args: |
             VERSION=${{ inputs.version }}
             GIT_SHA=${{ github.sha }}
+          secrets: |
             NODE_AUTH_TOKEN=${{ secrets.NODE_AUTH_TOKEN }}
