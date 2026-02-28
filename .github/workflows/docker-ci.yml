@@ -38,6 +38,9 @@ jobs:
   docker-build:
     name: Docker Build & Push
     runs-on: self-hosted-nix
+    outputs:
+      tags: ${{ steps.meta.outputs.tags }}
+      image_name: w90vyjm8.c1.bhs5.container-registry.ovh.net/${{ inputs.image_path }}
     if: |
       inputs.force_build || (
         github.repository_owner == 'coderbunker' &&
