@@ -48,3 +48,8 @@ repos:
         entry: actionlint
         language: system
         files: ^\.github/workflows/
+      - id: check-relative-actions
+        name: check-relative-actions
+        entry: .github/scripts/check-relative-actions.sh
+        language: system
+        files: ^\.github/workflows/.*\.ya?ml$

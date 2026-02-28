@@ -16,7 +16,7 @@ jobs:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Setup Cache
-        uses: ./.github/actions/setup-nix-env
+        uses: coderbunker/modern-resume-env/.github/actions/setup-nix-env@main
 
       - name: Run pre-commit
         run: nix develop --command pre-commit run --all-files
