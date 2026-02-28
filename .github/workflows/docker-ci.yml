@@ -48,9 +48,9 @@ jobs:
           images: ${{ inputs.image_name }}
           # The rules defined in the Tagging Policy
           tags: |
-            ${{ inputs.is_new_release == 'true' && format('type=raw,value={0}', inputs.version) || '' }}
-            ${{ github.ref_name == 'develop' && format('type=raw,value=develop-build-{0}', github.run_number) || '' }}
-            ${{ github.event_name == 'pull_request' && format('type=raw,value=pr-{0}-build-{1}', github.event.pull_request.number, github.run_number) || '' }}
+            type=raw,value=${{ inputs.version }},enable=${{ inputs.is_new_release }}
+            type=raw,value=develop-build-${{ github.run_number }},enable=${{ github.ref_name == 'develop' }}
+            type=raw,value=pr-${{ github.event.pull_request.number }}-build-${{ github.run_number }},enable=${{ github.event_name == 'pull_request' }}
             type=sha,format=short
 
       - name: Build and Push Docker Image
