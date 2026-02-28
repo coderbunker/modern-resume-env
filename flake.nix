@@ -99,6 +99,16 @@
             ${pkgs.bash}/bin/bash ${./scripts/versions.sh}
           '';
 
+          lib = {
+            inherit pkgsGroup;
+            shellUtils = ''
+              # Helper for interactive logging
+              log_interactive() {
+                if [ -t 1 ]; then echo -e "$@" >&2; fi
+              }
+            '';
+          };
+
         in
         {
           packages = {
@@ -114,33 +124,34 @@
               pkgs.glibc
             ]);
 
-            shellHook = ''
-              # Helper for interactive logging
-              log_interactive() {
-                if [ -t 1 ]; then echo -e "$@" >&2; fi
-              }
+            shellHook = lib.shellUtils + ''
+              # Setup docker-buildx plugin (only if binary is available)
+              if command -v docker-buildx >/dev/null 2>&1; then
+                export DOCKER_CONFIG="$PWD/.docker-nix"
+                mkdir -p "$DOCKER_CONFIG/cli-plugins"
+                ln -sf "$(command -v docker-buildx)" "$DOCKER_CONFIG/cli-plugins/docker-buildx"
+              fi
 
-              # Setup docker-buildx plugin
-              export DOCKER_CONFIG="$PWD/.docker-nix"
-              mkdir -p "$DOCKER_CONFIG/cli-plugins"
-              ln -sf "${pkgs.docker-buildx}/bin/docker-buildx" "$DOCKER_CONFIG/cli-plugins/docker-buildx"
-
-              # Automatic KUBECONFIG discovery
-              if [ -z "$KUBECONFIG" ]; then
-                if [ -f "$PWD/kubeconfig.yaml" ]; then export KUBECONFIG="$PWD/kubeconfig.yaml"
-                elif [ -f "$PWD/kubeconfig.yml" ]; then export KUBECONFIG="$PWD/kubeconfig.yml"
+              # Automatic KUBECONFIG discovery (only if kubectl is available)
+              if command -v kubectl >/dev/null 2>&1; then
+                if [ -z "$KUBECONFIG" ]; then
+                  if [ -f "$PWD/kubeconfig.yaml" ]; then export KUBECONFIG="$PWD/kubeconfig.yaml"
+                  elif [ -f "$PWD/kubeconfig.yml" ]; then export KUBECONFIG="$PWD/kubeconfig.yml"
+                  fi
                 fi
               fi
 
-              # Setup git hooks
-              ${builtins.toString ./scripts/setup-hooks.sh}
+              # Setup git hooks (only if pre-commit and git are available)
+              if [ -d ".git" ] && command -v pre-commit >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then
+                ${builtins.toString ./scripts/setup-hooks.sh}
+              fi
 
               log_interactive "\033[1;32mModern Resume Shared Environment Loaded\033[0m"
             '';
           };
 
           # Export lib inside each system too
-          lib.pkgsGroup = pkgsGroup;
+          lib = lib;
         }
       );
     in

@@ -2,7 +2,7 @@
 set -e
 
 # Install hooks if not already installed
-if [ -d ".git" ]; then
+if [ -d ".git" ] && command -v pre-commit >/dev/null 2>&1; then
 	pre-commit install >/dev/null 2>&1
 
 	# Patch the hook to use direnv if available
