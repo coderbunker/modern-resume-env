@@ -1,11 +1,29 @@
 name: Lint Action
 description: Reusable linting action using pre-commit and Nix.
 
+inputs:
+  install_deps:
+    description: "Install dependencies before linting (useful for local hooks like eslint)"
+    required: false
+    default: "false"
+
 runs:
   using: "composite"
   steps:
     - name: Setup Nix Environment
       uses: coderbunker/modern-resume-env/.github/actions/setup-nix-env@main
+
+    - name: Install dependencies
+      if: inputs.install_deps == 'true'
+      shell: bash
+      run: |
+        if [ -f "bun.lockb" ]; then
+          bun install --frozen-lockfile
+        elif [ -f "package-lock.json" ]; then
+          npm ci
+        elif [ -f "package.json" ]; then
+          npm install
+        fi
 
     - name: Run pre-commit
       shell: bash
