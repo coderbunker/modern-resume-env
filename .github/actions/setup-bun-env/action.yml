@@ -10,6 +10,9 @@ inputs:
     description: "Command to install dependencies"
     required: false
     default: "bun install --frozen-lockfile"
+  github_token:
+    description: "GitHub token for authentication with GitHub Packages"
+    required: false
 
 runs:
   using: "composite"
@@ -17,9 +20,15 @@ runs:
     - name: Setup GitHub Packages authentication
       shell: bash
       run: |
-        if [ -n "$GITHUB_TOKEN" ]; then
+        # Use provided token or fallback to environment variable
+        TOKEN="${{ inputs.github_token }}"
+        if [ -z "$TOKEN" ]; then
+          TOKEN="$GITHUB_TOKEN"
+        fi
+
+        if [ -n "$TOKEN" ]; then
           echo "@coderbunker:registry=https://npm.pkg.github.com" > .npmrc
-          echo "//npm.pkg.github.com/:_authToken=${GITHUB_TOKEN}" >> .npmrc
+          echo "//npm.pkg.github.com/:_authToken=${TOKEN}" >> .npmrc
         fi
 
     - name: Install dependencies

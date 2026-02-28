@@ -27,3 +27,4 @@ runs:
       with:
         install_deps: ${{ inputs.install_deps }}
         install_cmd: ${{ inputs.install_cmd }}
+        github_token: ${{ inputs.github_access_token }}
