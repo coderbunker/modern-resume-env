@@ -1,0 +1,64 @@
+name: Repolinter
+
+on:
+  workflow_call:
+    secrets:
+      GITHUB_TOKEN:
+        required: true
+
+jobs:
+  lint-repo:
+    name: Repository Topology Linter
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Target Repository
+        uses: actions/checkout@v4
+        with:
+          path: target-repo
+
+      - name: Checkout Environment Repository
+        uses: actions/checkout@v4
+        with:
+          repository: coderbunker/modern-resume-env
+          token: ${{ secrets.GITHUB_TOKEN }}
+          path: env-repo
+          ref: main
+
+      - name: Run Actionlint
+        uses: raven-actions/actionlint@v2
+        with:
+          workdir: target-repo
+
+      - name: Check Pre-commit Configuration
+        run: |
+          cd target-repo
+          ../env-repo/.github/scripts/check-precommit-hooks.sh
+
+      - name: Check Essential Files
+        run: |
+          cd target-repo
+          HAS_ERROR=0
+
+          echo "🔍 Checking for essential repository files..."
+
+          # Check for Nix Flake
+          if [[ ! -f "flake.nix" ]]; then
+              echo "::error file=flake.nix::Missing flake.nix in repository root. All repositories must use Nix."
+              HAS_ERROR=1
+          else
+              echo "✅ Found flake.nix"
+          fi
+
+          if [[ "$HAS_ERROR" -eq 1 ]]; then
+              exit 1
+          fi
+
+      - name: Install Nix (for flake check)
+        uses: cachix/install-nix-action@v27
+        with:
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Validate Nix Flake
+        run: |
+          cd target-repo
+          nix flake check
