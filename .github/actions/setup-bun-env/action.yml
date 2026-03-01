@@ -13,6 +13,10 @@ inputs:
   github_token:
     description: "GitHub token for authentication with GitHub Packages"
     required: false
+  working_directory:
+    description: "Directory where package.json is located"
+    required: false
+    default: "."
 
 runs:
   using: "composite"
@@ -20,6 +24,7 @@ runs:
     - name: Setup GitHub Packages authentication
       shell: bash
       run: |
+        cd "${{ inputs.working_directory }}"
         # Use provided token or fallback to environment variable
         TOKEN="${{ inputs.github_token }}"
         if [ -z "$TOKEN" ]; then
@@ -35,6 +40,7 @@ runs:
       if: inputs.install_deps == 'true'
       shell: bash
       run: |
+        cd "${{ inputs.working_directory }}"
         if [ -f "bun.lockb" ]; then
           bun install --frozen-lockfile
         elif [ -f "package-lock.json" ]; then

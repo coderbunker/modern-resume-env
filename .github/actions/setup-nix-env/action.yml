@@ -17,6 +17,10 @@ inputs:
   github_access_token:
     description: 'GitHub token for accessing private flakes'
     required: false
+  working_directory:
+    description: 'Directory where the flake.nix is located'
+    required: false
+    default: '.'
 
 runs:
   using: "composite"
@@ -52,6 +56,8 @@ runs:
     - name: Load Environment via Direnv
       shell: bash
       run: |
+        cd "${{ inputs.working_directory }}"
+
         # Add Nix to PATH immediately
         export PATH="/nix/var/nix/profiles/default/bin:/nix/var/nix/profiles/default/sbin:/usr/local/bin:$PATH"
 
@@ -67,6 +73,11 @@ runs:
           export PATH="$HOME/.nix-profile/bin:$PATH"
         fi
 
+        if [ ! -f .envrc ]; then
+          echo "::error::.envrc not found in ${{ inputs.working_directory }}."
+          exit 1
+        fi
+
         # Allow direnv to load the flake
         direnv allow
 
@@ -80,7 +91,7 @@ runs:
 
           # Export PATH split into individual lines
           echo "$ENV_JSON" | jq -r 'select(.PATH != null) | .PATH | split(":") | .[]' >> "$GITHUB_PATH"
-          echo "Shared environment successfully loaded from flake."
+          echo "Shared environment successfully loaded from flake in ${{ inputs.working_directory }}."
         else
           echo "::error::direnv failed to export environment variables."
           exit 1

@@ -26,6 +26,7 @@ jobs:
         with:
           github_access_token: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
           install_deps: "false"
+          working_directory: target-repo
 
       - name: Run Actionlint
         run: bunx actionlint

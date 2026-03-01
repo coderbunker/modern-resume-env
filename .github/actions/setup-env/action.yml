@@ -13,6 +13,10 @@ inputs:
     description: "Command to install dependencies"
     required: false
     default: "bun install --frozen-lockfile"
+  working_directory:
+    description: "Directory where the environment should be loaded from"
+    required: false
+    default: "."
 
 runs:
   using: "composite"
@@ -31,6 +35,7 @@ runs:
       uses: coderbunker/modern-resume-env/.github/actions/setup-nix-env@main
       with:
         github_access_token: ${{ inputs.github_access_token }}
+        working_directory: ${{ inputs.working_directory }}
 
     - name: Setup Bun Registry & Deps
       uses: coderbunker/modern-resume-env/.github/actions/setup-bun-env@main
@@ -38,3 +43,4 @@ runs:
         install_deps: ${{ inputs.install_deps }}
         install_cmd: ${{ inputs.install_cmd }}
         github_token: ${{ inputs.github_access_token }}
+        working_directory: ${{ inputs.working_directory }}
