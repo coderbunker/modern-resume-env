@@ -25,6 +25,25 @@ inputs:
 runs:
   using: "composite"
   steps:
+    - name: Check for existing Nix
+      id: check-nix
+      shell: bash
+      run: |
+        if command -v nix >/dev/null 2>&1 || [ -x "/nix/var/nix/profiles/default/bin/nix" ]; then
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+          if ! command -v nix >/dev/null 2>&1; then
+            echo "/nix/var/nix/profiles/default/bin" >> "$GITHUB_PATH"
+          fi
+        else
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Install Nix
+      if: steps.check-nix.outputs.exists != 'true'
+      uses: cachix/install-nix-action@v27
+      with:
+        github_access_token: ${{ inputs.github_access_token }}
+
     - name: Configure Nix
       shell: bash
       run: |

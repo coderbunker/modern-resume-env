@@ -21,21 +21,28 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Setup Bun
-      uses: oven-sh/setup-bun@v2
-      with:
-        bun-version: latest
-
-    - name: Setup Nix
-      uses: cachix/install-nix-action@v27
-      with:
-        github_access_token: ${{ inputs.github_access_token }}
-
-    - name: Load Nix Environment (Direnv/Flake)
+    - name: Setup Nix & Load Environment
       uses: coderbunker/modern-resume-env/.github/actions/setup-nix-env@main
       with:
         github_access_token: ${{ inputs.github_access_token }}
         working_directory: ${{ inputs.working_directory }}
+
+    - name: Check for existing Bun
+      id: check-bun
+      shell: bash
+      run: |
+        if command -v bun >/dev/null 2>&1; then
+          echo "exists=true" >> "$GITHUB_OUTPUT"
+          echo "✅ Bun available via Nix or pre-installed: $(bun --version)"
+        else
+          echo "exists=false" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Setup Bun (Fallback)
+      if: steps.check-bun.outputs.exists != 'true'
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
 
     - name: Setup Bun Registry & Deps
       uses: coderbunker/modern-resume-env/.github/actions/setup-bun-env@main
