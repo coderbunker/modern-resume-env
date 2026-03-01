@@ -28,6 +28,15 @@ jobs:
           install_deps: "false"
           working_directory: target-repo
 
+      - name: Ensure Actionlint Config
+        shell: bash
+        run: |
+          if [[ ! -f "target-repo/.github/actionlint.yaml" && ! -f "target-repo/.github/actionlint.yml" ]]; then
+            echo "📝 Copying default actionlint.yaml from env-repo"
+            mkdir -p target-repo/.github
+            cp env-repo/.github/actionlint.yaml target-repo/.github/actionlint.yaml
+          fi
+
       - name: Run Actionlint
         run: bunx actionlint
         working-directory: target-repo
