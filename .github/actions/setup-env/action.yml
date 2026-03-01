@@ -17,12 +17,22 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Setup Nix Environment
+    - name: Setup Bun
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: latest
+
+    - name: Setup Nix
+      uses: cachix/install-nix-action@v27
+      with:
+        github_access_token: ${{ inputs.github_access_token }}
+
+    - name: Load Nix Environment (Direnv/Flake)
       uses: coderbunker/modern-resume-env/.github/actions/setup-nix-env@main
       with:
         github_access_token: ${{ inputs.github_access_token }}
 
-    - name: Setup Bun Environment
+    - name: Setup Bun Registry & Deps
       uses: coderbunker/modern-resume-env/.github/actions/setup-bun-env@main
       with:
         install_deps: ${{ inputs.install_deps }}

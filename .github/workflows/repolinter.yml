@@ -21,11 +21,11 @@ jobs:
           path: env-repo
           ref: main
 
-      - name: Setup GitHub Packages authentication
-        shell: bash
-        run: |
-          echo "@coderbunker:registry=https://npm.pkg.github.com" > ~/.npmrc
-          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}" >> ~/.npmrc
+      - name: Setup Environment
+        uses: ./env-repo/.github/actions/setup-env
+        with:
+          github_access_token: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+          install_deps: "false"
 
       - name: Run Actionlint
         run: bunx actionlint
@@ -62,11 +62,6 @@ jobs:
           if [[ "$HAS_ERROR" -eq 1 ]]; then
               exit 1
           fi
-
-      - name: Install Nix (for flake check)
-        uses: cachix/install-nix-action@v27
-        with:
-          github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Validate Nix Flake
         run: |
