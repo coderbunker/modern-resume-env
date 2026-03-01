@@ -79,6 +79,7 @@
               pkgs.actionlint
               pkgs.nixpkgs-fmt
               pkgs.eslint
+              checkNonWestern
             ];
 
             db = [
@@ -99,6 +100,10 @@
             ${pkgs.bash}/bin/bash ${./scripts/versions.sh}
           '';
 
+          checkNonWestern = pkgs.writeShellScriptBin "check-non-western" ''
+            ${pkgs.python3}/bin/python3 ${./scripts/check-non-western.py} "$@"
+          '';
+
           lib = {
             inherit pkgsGroup;
             shellUtils = ''
@@ -113,12 +118,14 @@
         {
           packages = {
             versions = baseVersions;
+            check-non-western = checkNonWestern;
             ovhcloud = ovhcloud;
           };
 
           devShells.default = pkgs.mkShell {
             buildInputs = allPkgs ++ [
               self.packages.${system}.versions
+              self.packages.${system}.check-non-western
             ] ++ (if system == "aarch64-darwin" || system == "x86_64-darwin" then [ ] else [
               pkgs.stdenv.cc.cc.lib
               pkgs.glibc

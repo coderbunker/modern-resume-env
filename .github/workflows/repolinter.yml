@@ -28,9 +28,16 @@ jobs:
           echo "//npm.pkg.github.com/:_authToken=${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}" >> ~/.npmrc
 
       - name: Run Actionlint
-        uses: raven-actions/actionlint@v2
-        with:
-          working-directory: target-repo
+        run: bunx actionlint
+        working-directory: target-repo
+
+      - name: Check Non-Western Characters
+        shell: bash
+        run: |
+          cd target-repo
+          # Use git ls-files to get all tracked files, excluding binary ones if possible
+          # We xargs them to the shared script
+          git ls-files | xargs ../env-repo/scripts/check-non-western.py
 
       - name: Check Pre-commit Configuration
         run: |
