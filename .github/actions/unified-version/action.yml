@@ -32,11 +32,13 @@ runs:
       shell: bash
       run: bun install -g npm
 
-    - name: Setup .npmrc
+    - name: Setup .npmrc and Environment
       shell: bash
       run: |
         echo "//npm.pkg.github.com/:_authToken=${{ inputs.github_token }}" > ~/.npmrc
         echo "//npm.pkg.github.com/:_authToken=${{ inputs.github_token }}" > .npmrc
+        echo "NPM_TOKEN=${{ inputs.github_token }}" >> "$GITHUB_ENV"
+        echo "NODE_AUTH_TOKEN=${{ inputs.github_token }}" >> "$GITHUB_ENV"
 
     - name: Run Semantic Release
       id: semantic
