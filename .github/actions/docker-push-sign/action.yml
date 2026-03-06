@@ -27,6 +27,15 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Check OIDC Token Availability
+      shell: bash
+      run: |
+        if [ -z "$ACTIONS_ID_TOKEN_REQUEST_URL" ]; then
+          echo "Error: OIDC token generation is not available."
+          echo "Please ensure the workflow has 'permissions: id-token: write'."
+          exit 1
+        fi
+
     - name: Push and Sign
       shell: bash
       env:
