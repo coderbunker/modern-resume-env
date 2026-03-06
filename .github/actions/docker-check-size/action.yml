@@ -4,7 +4,18 @@ description: Compares local image size with remote registry image size and repor
 inputs:
   remote_image:
     description: Full name of the remote image (including registry)
-    required: true
+    required: false
+  registry:
+    description: Registry hostname
+    required: false
+    default: w90vyjm8.c1.bhs5.container-registry.ovh.net
+  registry_path:
+    description: Registry path/project
+    required: false
+    default: cv.coderbunker.ca
+  image_name:
+    description: Name of the image (without registry or path)
+    required: false
   local_image:
     description: Name of the local image to compare
     required: true
@@ -31,10 +42,21 @@ runs:
       id: check
       shell: bash
       env:
-        REMOTE_IMAGE_NAME: ${{ inputs.remote_image }}
+        REGISTRY: ${{ inputs.registry }}
+        REGISTRY_PATH: ${{ inputs.registry_path }}
+        IMAGE_NAME_INPUT: ${{ inputs.image_name }}
+        REMOTE_IMAGE_FULL: ${{ inputs.remote_image }}
         LOCAL_IMAGE_NAME: ${{ inputs.local_image }}
         FAIL_THRESHOLD_PERCENT: ${{ inputs.threshold }}
       run: |
+        # Construct full image name if not explicitly provided
+        if [ -n "$REMOTE_IMAGE_FULL" ]; then
+          REMOTE_IMAGE_NAME="$REMOTE_IMAGE_FULL"
+        else
+          REMOTE_IMAGE_NAME="${REGISTRY}/${REGISTRY_PATH}/${IMAGE_NAME_INPUT}"
+        fi
+
+        export REMOTE_IMAGE_NAME
         ${{ github.action_path }}/../../scripts/docker-check-size.sh
 
     - name: Report Size Increase to PR

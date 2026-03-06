@@ -7,7 +7,18 @@ inputs:
     required: true
   remote_image:
     description: Full name of the remote image (including registry)
-    required: true
+    required: false
+  registry:
+    description: Registry hostname
+    required: false
+    default: w90vyjm8.c1.bhs5.container-registry.ovh.net
+  registry_path:
+    description: Registry path/project
+    required: false
+    default: cv.coderbunker.ca
+  image_name:
+    description: Name of the image (without registry or path)
+    required: false
   version:
     description: Version tag to use
     required: true
@@ -51,12 +62,23 @@ runs:
     - name: Push and Sign
       shell: bash
       env:
-        IMAGE_NAME: ${{ inputs.remote_image }}
+        REGISTRY: ${{ inputs.registry }}
+        REGISTRY_PATH: ${{ inputs.registry_path }}
+        IMAGE_NAME_INPUT: ${{ inputs.image_name }}
+        REMOTE_IMAGE_FULL: ${{ inputs.remote_image }}
         LOCAL_IMAGE: ${{ inputs.local_image }}
         TAG_SUFFIX: ${{ inputs.tag_suffix }}
         TAGS: ${{ steps.meta.outputs.tags }}
         COSIGN_YES: "true"
       run: |
+        # Construct full image name if not explicitly provided
+        if [ -n "$REMOTE_IMAGE_FULL" ]; then
+          IMAGE_NAME="$REMOTE_IMAGE_FULL"
+        else
+          IMAGE_NAME="${REGISTRY}/${REGISTRY_PATH}/${IMAGE_NAME_INPUT}"
+        fi
+
+        echo "Using image name: $IMAGE_NAME"
         # The generator returns tags in format: type=raw,value=TAG
         # We need to extract just the TAG values
         CLEAN_TAGS=$(echo -e "$TAGS" | grep "type=raw,value=" | cut -d '=' -f 3)

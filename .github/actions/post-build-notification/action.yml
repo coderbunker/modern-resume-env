@@ -12,6 +12,14 @@ inputs:
   image_name:
     description: "The full image name without tags (e.g. w90vyjm8.c1.bhs5.container-registry.ovh.net/cv.coderbunker.ca/modern-resume)"
     required: false
+  registry:
+    description: "Registry hostname"
+    required: false
+    default: "w90vyjm8.c1.bhs5.container-registry.ovh.net"
+  registry_path:
+    description: "Registry path/project"
+    required: false
+    default: "cv.coderbunker.ca"
   tags:
     description: "Newline separated list of tags pushed"
     required: false
@@ -31,6 +39,8 @@ runs:
           const buildResult = '${{ inputs.build_result }}';
           const version = '${{ inputs.version }}';
           const imageName = '${{ inputs.image_name }}';
+          const registry = '${{ inputs.registry }}';
+          const registryPath = '${{ inputs.registry_path }}';
           const tagsInput = `${{ inputs.tags }}`;
 
           let resultIcon = '❓ **Unknown**';
@@ -90,12 +100,12 @@ runs:
 
           // If build succeeded and image details were provided
           if (buildResult === 'success' && imageName) {
-            // Create Harbor web URL strictly based on known conventions
-            // Format: https://w90vyjm8.c1.bhs5.container-registry.ovh.net/harbor/projects/3/repositories/modern-resume-admin/artifacts-tab
+            // Construct Harbor web URL
             let harborUrl = "";
-            if (imageName.includes("w90vyjm8.c1.bhs5.container-registry.ovh.net/cv.coderbunker.ca/")) {
-              const harborRepoPath = imageName.replace("w90vyjm8.c1.bhs5.container-registry.ovh.net/cv.coderbunker.ca/", "");
-              harborUrl = `https://w90vyjm8.c1.bhs5.container-registry.ovh.net/harbor/projects/3/repositories/${harborRepoPath}/artifacts-tab`;
+            const harborProjectBase = `${registry}/${registryPath}/`;
+            if (imageName.includes(harborProjectBase)) {
+              const harborRepoPath = imageName.replace(harborProjectBase, "");
+              harborUrl = `https://${registry}/harbor/projects/3/repositories/${harborRepoPath}/artifacts-tab`;
             }
 
             successDetails += `\n\n### 📦 Docker Artifacts\n`;
