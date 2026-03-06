@@ -51,6 +51,12 @@ jobs:
         with:
           node-version: "lts/*"
 
+      - name: Setup .npmrc for GitHub Packages
+        shell: bash
+        run: |
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > ~/.npmrc
+          echo "//npm.pkg.github.com/:_authToken=${{ secrets.GITHUB_TOKEN }}" > .npmrc
+
       - name: Run Semantic Release
         id: semantic
         uses: cycjimmy/semantic-release-action@v4
@@ -59,3 +65,5 @@ jobs:
           dry_run: ${{ inputs.dry_run }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.GITHUB_TOKEN }}
