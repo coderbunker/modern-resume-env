@@ -56,6 +56,9 @@ def main():
     for filepath in files:
         if os.path.isdir(filepath):
             continue
+        if not os.path.exists(filepath):
+            print(f"Skipping missing file or broken symlink: {filepath}")
+            continue
         if not check_file(filepath):
             failed = True
 
