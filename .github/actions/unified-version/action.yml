@@ -32,6 +32,10 @@ runs:
       shell: bash
       run: bun install -g npm
 
+    - name: Setup .npmrc
+      shell: bash
+      run: echo "//npm.pkg.github.com/:_authToken=${{ inputs.github_token }}" > ~/.npmrc
+
     - name: Run Semantic Release
       id: semantic
       if: github.event_name == 'push' && github.ref == 'refs/heads/main'
