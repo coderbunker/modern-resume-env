@@ -23,6 +23,9 @@ inputs:
   tags:
     description: "Newline separated list of tags pushed"
     required: false
+  base_image_name:
+    description: "The short name of the image (e.g. modern-resume-admin). If provided, imageName is constructed using registry/registry_path."
+    required: false
   github_token:
     description: "GitHub Token for posting comments"
     required: true
@@ -38,7 +41,8 @@ runs:
           const { owner, repo } = context.repo;
           const buildResult = '${{ inputs.build_result }}';
           const version = '${{ inputs.version }}';
-          const imageName = '${{ inputs.image_name }}';
+          let imageName = '${{ inputs.image_name }}';
+          const baseImageName = '${{ inputs.base_image_name }}';
           const registry = '${{ inputs.registry }}';
           const registryPath = '${{ inputs.registry_path }}';
           const tagsInput = `${{ inputs.tags }}`;
@@ -102,6 +106,12 @@ runs:
           if (buildResult === 'success' && imageName) {
             // Construct Harbor web URL
             let harborUrl = "";
+
+            // If base_image_name is provided, construct the full imageName
+            if (baseImageName && !imageName) {
+              imageName = `${registry}/${registryPath}/${baseImageName}`;
+            }
+
             const harborProjectBase = `${registry}/${registryPath}/`;
             if (imageName.includes(harborProjectBase)) {
               const harborRepoPath = imageName.replace(harborProjectBase, "");
