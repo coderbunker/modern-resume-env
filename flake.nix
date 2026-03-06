@@ -112,6 +112,12 @@
                 if [ -t 1 ]; then echo -e "$@" >&2; fi
               }
             '';
+            setupHooks = ''
+              # Setup git hooks (only if pre-commit and git are available)
+              if [ -d ".git" ] && command -v pre-commit >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then
+                ${pkgs.bash}/bin/bash ${./scripts/setup-hooks.sh}
+              fi
+            '';
           };
 
         in
@@ -148,10 +154,7 @@
                 fi
               fi
 
-              # Setup git hooks (only if pre-commit and git are available)
-              if [ -d ".git" ] && command -v pre-commit >/dev/null 2>&1 && command -v git >/dev/null 2>&1; then
-                ${builtins.toString ./scripts/setup-hooks.sh}
-              fi
+              ${lib.setupHooks}
 
               log_interactive "\033[1;32mModern Resume Shared Environment Loaded\033[0m"
             '';
