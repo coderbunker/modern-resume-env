@@ -1,0 +1,68 @@
+name: Generate Version JSON
+description: Generates a standardized version.json file for the project.
+
+inputs:
+  version:
+    description: "The version string"
+    required: true
+  commit:
+    description: "The commit SHA"
+    required: false
+    default: ${{ github.sha }}
+  environment:
+    description: "The environment (e.g., main, develop, pr-123)"
+    required: false
+    default: ${{ github.ref_name }}
+  output_file:
+    description: "Where to save the JSON file"
+    required: false
+    default: "version.json"
+  include_tool_versions:
+    description: "Whether to include tool versions from Nix"
+    required: false
+    default: "true"
+
+runs:
+  using: "composite"
+  steps:
+    - name: Generate JSON
+      shell: bash
+      run: |
+        echo "Generating ${{ inputs.output_file }}..."
+
+        # Determine commit short SHA
+        SHORT_SHA=$(echo "${{ inputs.commit }}" | cut -c1-7)
+
+        # Get tool versions if requested and nix is available
+        TOOL_VERSIONS="{}"
+        if [[ "${{ inputs.include_tool_versions }}" == "true" ]]; then
+          if [[ -f "flake.nix" ]]; then
+            echo "Attempting to get tool versions via Nix..."
+            TOOL_VERSIONS=$(nix develop .#default --command versions 2>/dev/null || echo "{}")
+            # Ensure it's valid JSON even if it failed
+            if ! echo "$TOOL_VERSIONS" | jq . >/dev/null 2>&1; then
+              TOOL_VERSIONS="{}"
+            fi
+          else
+            echo "flake.nix not found, skipping tool versions."
+          fi
+        fi
+
+        # Create the final JSON
+        jq -n \
+          --arg version "${{ inputs.version }}" \
+          --arg commit "${{ inputs.commit }}" \
+          --arg buildDate "$(date -u +'%Y-%m-%dT%H:%M:%SZ')" \
+          --arg environment "${{ inputs.environment }}" \
+          --argjson versions "$TOOL_VERSIONS" \
+          '{
+            version: $version,
+            commit: $commit,
+            buildDate: $buildDate,
+            environment: $environment,
+            versions: $versions
+          }' | jq 'if .versions == {} then del(.versions) else . end' \
+          > "${{ inputs.output_file }}"
+
+        echo "✅ Generated ${{ inputs.output_file }}:"
+        cat "${{ inputs.output_file }}"
