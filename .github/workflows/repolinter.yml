@@ -73,27 +73,12 @@ jobs:
               exit 1
           fi
 
-      - name: Check for Hardcoded Registry
+      - name: Check for Forbidden Hardcoded Strings
         shell: bash
         run: |
           cd target-repo
-          REGISTRY="w90vyjm8.c1.bhs5.container-registry.ovh.net"
-          echo "🔍 Checking for hardcoded registry: $REGISTRY"
-
-          # We check all tracked files, excluding documentation (.md)
-          # grep -l returns the file names that match
-          HARDCODED_FILES=$(git ls-files | grep -v '\.md$' | xargs grep -l "$REGISTRY" || true)
-
-          if [[ -z "$HARDCODED_FILES" ]]; then
-              echo "✅ No hardcoded registry strings found in code."
-          else
-              echo "❌ Found hardcoded registry in the following files:"
-              echo "$HARDCODED_FILES"
-              for file in $HARDCODED_FILES; do
-                echo "::error file=$file::Hardcoded registry hostname found. Please use centralized actions or environment variables."
-              done
-              exit 1
-          fi
+          chmod +x ../env-repo/.github/scripts/check-forbidden-strings.sh
+          ../env-repo/.github/scripts/check-forbidden-strings.sh "${{ github.repository }}"
 
       - name: Validate Nix Flake
         run: |
