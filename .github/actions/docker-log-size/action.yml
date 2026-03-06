@@ -12,4 +12,4 @@ runs:
     - name: Run Size Logging
       shell: bash
       run: |
-        ${{ github.action_path }}/../../../scripts/docker-log-size.sh "${{ inputs.image }}"
+        ${{ github.action_path }}/../../scripts/docker-log-size.sh "${{ inputs.image }}"

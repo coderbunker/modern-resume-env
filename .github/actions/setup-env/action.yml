@@ -46,6 +46,8 @@ runs:
 
     - name: Setup Bun Registry & Deps
       uses: coderbunker/modern-resume-env/.github/actions/setup-bun-env@main
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.github_access_token }}
       with:
         install_deps: ${{ inputs.install_deps }}
         install_cmd: ${{ inputs.install_cmd }}

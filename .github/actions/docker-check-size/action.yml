@@ -35,7 +35,7 @@ runs:
         LOCAL_IMAGE_NAME: ${{ inputs.local_image }}
         FAIL_THRESHOLD_PERCENT: ${{ inputs.threshold }}
       run: |
-        ${{ github.action_path }}/../../../scripts/docker-check-size.sh
+        ${{ github.action_path }}/../../scripts/docker-check-size.sh
 
     - name: Report Size Increase to PR
       if: |
