@@ -68,6 +68,10 @@ runs:
         fi
 
         # Output tags
+        echo "Final tags for metadata-action:"
+        echo -e "$TAGS"
+        echo "Primary tag: $PRIMARY_TAG"
+
         echo "tags<<EOF" >> "$GITHUB_OUTPUT"
         echo -e "$TAGS" >> "$GITHUB_OUTPUT"
         echo "EOF" >> "$GITHUB_OUTPUT"
