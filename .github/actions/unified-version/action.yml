@@ -34,7 +34,9 @@ runs:
 
     - name: Setup .npmrc
       shell: bash
-      run: echo "//npm.pkg.github.com/:_authToken=${{ inputs.github_token }}" > ~/.npmrc
+      run: |
+        echo "//npm.pkg.github.com/:_authToken=${{ inputs.github_token }}" > ~/.npmrc
+        echo "//npm.pkg.github.com/:_authToken=${{ inputs.github_token }}" > .npmrc
 
     - name: Run Semantic Release
       id: semantic
