@@ -6,7 +6,7 @@ We need pre-determined ports for local development to prevent port conflicts as 
 
 * modern-resume: 8080
 * modern-resume-admin: 8081
-* modern-resume-backend: 3000
+* modern-resume-backend: 3002
 * modern-resume-infra/api: 3001
 * postgres: 5432
 * docling: 5001
