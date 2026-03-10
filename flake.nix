@@ -154,9 +154,17 @@
                 fi
               fi
 
+              # SOPS Age Key discovery
+              if [ -f "$HOME/.config/sops/age/keys.txt" ]; then
+                export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
+              else
+                log_interactive "\033[1;33mWarning: SOPS age key not found at ~/.config/sops/age/keys.txt\033[0m"
+                log_interactive "To configure SOPS, see: \033[1;34mhttps://github.com/coderbunker/modern-resume-env/blob/main/docs/SOPS.md\033[0m"
+              fi
+
               ${lib.setupHooks}
 
-              log_interactive "\033[1;32mModern Resume Shared Environment Loaded\033[0m"
+              log_interactive "\033[1;32mModern Resume Shared Development Environment Loaded\033[0m"
             '';
           };
 
