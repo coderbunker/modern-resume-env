@@ -62,6 +62,7 @@
               pkgs.age
               pkgs.yq-go
               pkgs.rclone
+              buns
             ];
 
             docker = [
