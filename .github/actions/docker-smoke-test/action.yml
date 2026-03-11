@@ -4,50 +4,30 @@ inputs:
   compose_file:
     description: 'Path to docker-compose.yml'
     required: true
-  service_name:
-    description: 'Service name in compose file to test'
-    required: true
-  health_url:
-    description: 'URL to check for health'
-    required: true
-  timeout:
-    description: 'Timeout in seconds'
+  profile:
+    description: 'Docker Compose profile to use'
     required: false
-    default: '60'
-  image_tag:
-    description: 'Image tag to use for the service'
+    default: ''
+  attach_services:
+    description: 'Comma-separated list of services to attach logs from'
     required: false
+    default: ''
+  exclusions:
+    description: 'List of log messages (one per line) to exclude from ERROR|WARN check'
+    required: false
+    default: ''
 
 runs:
   using: "composite"
   steps:
-    - name: Start Services
-      shell: bash
-      env:
-        SERVICE_IMAGE: ${{ inputs.service_name }}
-      run: |
-        docker compose -f ${{ inputs.compose_file }} up -d --wait
-
-    - name: Verify Health
+    - name: Run Smoke Test Script
       shell: bash
       run: |
-        echo "🧪 Start health check for ${{ inputs.service_name }} at ${{ inputs.health_url }}..."
-        SUCCESS=0
-        for i in {1..30}; do
-          if curl -f ${{ inputs.health_url }}; then
-            echo "✅ Health check passed!"
-            SUCCESS=1
-            break
-          fi
-          echo "⏳ Waiting for health check ($i/30)..."
-          sleep 2
-        done
-
-        if [ $SUCCESS -eq 0 ]; then
-          echo "❌ Smoke test failed!"
-          docker compose -f ${{ inputs.compose_file }} logs ${{ inputs.service_name }}
-          exit 1
-        fi
+        ${{ github.action_path }}/../../scripts/smoke-test.sh \
+          "${{ inputs.compose_file }}" \
+          "${{ inputs.profile }}" \
+          "${{ inputs.attach_services }}" \
+          "${{ inputs.exclusions }}"
 
     - name: Cleanup
       if: always()
