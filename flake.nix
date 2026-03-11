@@ -127,6 +127,7 @@
               # SOPS Age Key discovery
               if [ -f "$HOME/.config/sops/age/keys.txt" ]; then
                 export SOPS_AGE_KEY_FILE="$HOME/.config/sops/age/keys.txt"
+                log_interactive "\033[1;32m+ SOPS Age Key found at: $SOPS_AGE_KEY_FILE\033[0m"
               else
                 log_interactive "\033[1;33mWarning: SOPS age key not found at ~/.config/sops/age/keys.txt\033[0m"
                 log_interactive "To configure SOPS, see: \033[1;34mhttps://github.com/coderbunker/modern-resume-env/blob/main/docs/SOPS.md\033[0m"
