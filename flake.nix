@@ -80,6 +80,7 @@
               pkgs.nixpkgs-fmt
               pkgs.eslint
               checkNonWestern
+              validate-compose
             ];
 
             db = [
