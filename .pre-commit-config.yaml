@@ -15,7 +15,6 @@ repos:
         entry: shellcheck
         language: system
         types: [shell]
-        exclude: ^\.envrc$
       - id: shfmt
         name: shfmt
         entry: shfmt -w
@@ -47,13 +46,18 @@ repos:
         name: actionlint
         entry: actionlint
         language: system
-        files: ^\.github/workflows/
+        files: ^\.github/workflows/.*\.ya?ml$
       - id: validate-compose
         name: validate-compose
         entry: validate-compose
         language: system
         files: ^docker-compose\.ya?ml$
         pass_filenames: true
+      - id: check-non-western
+        name: check-non-western
+        entry: check-non-western
+        language: system
+        types_or: [text, javascript, ts, python, yaml, json, markdown]
       - id: check-relative-actions
         name: check-relative-actions
         entry: .github/scripts/check-relative-actions.sh

@@ -1,0 +1,64 @@
+- id: shellcheck
+  name: shellcheck
+  description: Lint shell scripts using shellcheck
+  entry: shellcheck
+  language: system
+  types: [shell]
+
+- id: shfmt
+  name: shfmt
+  description: Format shell scripts using shfmt
+  entry: shfmt -w
+  language: system
+  types: [shell]
+
+- id: nixpkgs-fmt
+  name: nixpkgs-fmt
+  description: Format Nix files using nixpkgs-fmt
+  entry: nixpkgs-fmt
+  language: system
+  types: [nix]
+
+- id: yamllint
+  name: yamllint
+  description: Lint YAML files using yamllint
+  entry: yamllint
+  language: system
+  types: [yaml]
+  args: [-d, "{extends: relaxed, rules: {line-length: disable}}"]
+
+- id: markdownlint
+  name: markdownlint
+  description: Lint Markdown files using markdownlint
+  entry: markdownlint --fix
+  language: system
+  types: [markdown]
+
+- id: hadolint
+  name: hadolint
+  description: Lint Dockerfiles using hadolint
+  entry: hadolint
+  language: system
+  types: [dockerfile]
+
+- id: actionlint
+  name: actionlint
+  description: Lint GitHub Actions workflows using actionlint
+  entry: actionlint
+  language: system
+  files: ^\.github/workflows/.*\.ya?ml$
+
+- id: validate-compose
+  name: validate-compose
+  description: Validate Docker Compose files across all profiles
+  entry: validate-compose
+  language: system
+  files: ^docker-compose\.ya?ml$
+  pass_filenames: true
+
+- id: check-non-western
+  name: check-non-western
+  description: Check for non-Western characters in source files
+  entry: check-non-western
+  language: system
+  types_or: [text, javascript, ts, python, yaml, json, markdown]
