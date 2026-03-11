@@ -48,6 +48,12 @@ repos:
         entry: actionlint
         language: system
         files: ^\.github/workflows/
+      - id: validate-compose
+        name: validate-compose
+        entry: validate-compose
+        language: system
+        files: ^docker-compose\.ya?ml$
+        pass_filenames: true
       - id: check-relative-actions
         name: check-relative-actions
         entry: .github/scripts/check-relative-actions.sh

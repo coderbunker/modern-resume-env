@@ -104,6 +104,15 @@
             ${pkgs.python3}/bin/python3 ${./scripts/check-non-western.py} "$@"
           '';
 
+          buns = pkgs.writeShellScriptBin "buns" ''
+            export VALIDATE_SCRIPT_PATH="${./scripts/validate-env.ts}"
+            ${pkgs.bash}/bin/bash ${./scripts/buns.sh} "$@"
+          '';
+
+          validate-compose = pkgs.writeShellScriptBin "validate-compose" ''
+            ${pkgs.bash}/bin/bash ${./scripts/validate-compose.sh} "$@"
+          '';
+
           lib = {
             inherit pkgsGroup;
             shellUtils = ''
@@ -125,6 +134,8 @@
           packages = {
             versions = baseVersions;
             check-non-western = checkNonWestern;
+            buns = buns;
+            validate-compose = validate-compose;
             ovhcloud = ovhcloud;
           };
 
@@ -132,6 +143,8 @@
             buildInputs = allPkgs ++ [
               self.packages.${system}.versions
               self.packages.${system}.check-non-western
+              self.packages.${system}.buns
+              self.packages.${system}.validate-compose
             ] ++ (if system == "aarch64-darwin" || system == "x86_64-darwin" then [ ] else [
               pkgs.stdenv.cc.cc.lib
               pkgs.glibc
