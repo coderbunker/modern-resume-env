@@ -10,17 +10,25 @@ if [ -z "$REMOTE_IMAGE_NAME" ] || [ -z "$LOCAL_IMAGE_NAME" ]; then
 	exit 1
 fi
 
+# Ensure images have a tag (default to :latest if none provided)
+if [[ "$REMOTE_IMAGE_NAME" != *":"* ]]; then
+	REMOTE_IMAGE_NAME="$REMOTE_IMAGE_NAME:latest"
+fi
+if [[ "$LOCAL_IMAGE_NAME" != *":"* ]]; then
+	LOCAL_IMAGE_NAME="$LOCAL_IMAGE_NAME:latest"
+fi
+
 echo "Comparing image sizes..."
-echo "Remote Image: $REMOTE_IMAGE_NAME:latest"
-echo "Local Image:  $LOCAL_IMAGE_NAME:latest"
+echo "Remote Image: $REMOTE_IMAGE_NAME"
+echo "Local Image:  $LOCAL_IMAGE_NAME"
 
 # 1. Get Remote Size (Compressed) via Manifest
 # Enable experimental CLI features for manifest inspect
 export DOCKER_CLI_EXPERIMENTAL=enabled
 
 # Capture output, handle failure if tag doesn't exist
-if ! MANIFEST_JSON=$(docker manifest inspect -v "$REMOTE_IMAGE_NAME:latest" 2>/dev/null); then
-	echo "No existing 'latest' image found in registry. Skipping comparison."
+if ! MANIFEST_JSON=$(docker manifest inspect -v "$REMOTE_IMAGE_NAME" 2>/dev/null); then
+	echo "No existing image found in registry for $REMOTE_IMAGE_NAME. Skipping comparison."
 	exit 0
 fi
 
@@ -54,8 +62,8 @@ fi
 
 # 2. Get Local Size (Compressed approximation)
 echo "Calculating local estimated compressed size (50% of uncompressed)..."
-if ! UNCOMPRESSED_SIZE=$(docker inspect -f "{{ .Size }}" "$LOCAL_IMAGE_NAME:latest" 2>/dev/null); then
-	echo "Error: Local image '$LOCAL_IMAGE_NAME:latest' not found."
+if ! UNCOMPRESSED_SIZE=$(docker inspect -f "{{ .Size }}" "$LOCAL_IMAGE_NAME" 2>/dev/null); then
+	echo "Error: Local image '$LOCAL_IMAGE_NAME' not found."
 	exit 1
 fi
 
