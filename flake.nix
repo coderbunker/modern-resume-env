@@ -63,6 +63,7 @@
               pkgs.yq-go
               pkgs.rclone
               buns
+              dockers
             ];
 
             docker = [
@@ -111,6 +112,10 @@
             ${pkgs.bash}/bin/bash ${./scripts/buns.sh} "$@"
           '';
 
+          dockers = pkgs.writeShellScriptBin "dockers" ''
+            ${pkgs.bash}/bin/bash ${./scripts/dockers.sh} "$@"
+          '';
+
           validate-compose = pkgs.writeShellScriptBin "validate-compose" ''
             ${pkgs.bash}/bin/bash ${./scripts/validate-compose.sh} "$@"
           '';
@@ -147,6 +152,7 @@
             versions = baseVersions;
             check-non-western = checkNonWestern;
             buns = buns;
+            dockers = dockers;
             validate-compose = validate-compose;
             ovhcloud = ovhcloud;
           };
@@ -156,6 +162,7 @@
               self.packages.${system}.versions
               self.packages.${system}.check-non-western
               self.packages.${system}.buns
+              self.packages.${system}.dockers
               self.packages.${system}.validate-compose
             ] ++ (if system == "aarch64-darwin" || system == "x86_64-darwin" then [ ] else [
               pkgs.stdenv.cc.cc.lib
