@@ -16,6 +16,7 @@ if [ "$USE_SOPS" = true ]; then
 	# Only attempt decryption if we have a way to decrypt
 	if [ -n "$SOPS_AGE_KEY_FILE" ] || [ -n "$SOPS_AGE_KEY" ]; then
 		# Use sops -d and eval to load secrets into the environment.
+		echo "🔓 Decrypting secrets from $SOPS_FILE..." >&2
 		if ! DECRYPTED_VARS=$(sops -d --output-type dotenv "$SOPS_FILE" 2>/tmp/sops-error); then
 			echo "❌ Error: Failed to decrypt $SOPS_FILE" >&2
 			cat /tmp/sops-error >&2
