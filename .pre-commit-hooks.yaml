@@ -3,6 +3,7 @@
   description: Lint shell scripts using shellcheck
   entry: shellcheck
   language: system
+  exclude: ^\.envrc$
   types: [shell]
 
 - id: shfmt
