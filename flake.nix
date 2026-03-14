@@ -138,6 +138,14 @@
             };
 
             devenv.shells.default = {
+              # Workaround for pure evaluation (CI and flakes)
+              # devenv needs a root to store its db, but pure evaluation doesn't have a writable path.
+              devenv.root =
+                let
+                  inRoot = builtins.getEnv "PWD";
+                in
+                if inRoot == "" then "/tmp" else inRoot;
+
               # Enable devenv's language features for better DX
               languages.javascript = {
                 enable = true;
