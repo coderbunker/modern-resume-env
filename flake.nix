@@ -138,10 +138,6 @@
             };
 
             devenv.shells.default = {
-              # Workaround for pure evaluation (CI and flakes)
-              # see: https://devenv.sh/guides/using-with-flakes/#entering-the-shell
-              devenv.root = let inRoot = builtins.toString ./.; in inRoot;
-
               # Enable devenv's language features for better DX
               languages.javascript = {
                 enable = true;
