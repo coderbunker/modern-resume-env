@@ -38,7 +38,7 @@ jobs:
           fi
 
       - name: Run Actionlint
-        run: bunx actionlint
+        run: actionlint
         working-directory: target-repo
 
       - name: Check Non-Western Characters
