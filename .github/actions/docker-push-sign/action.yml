@@ -57,7 +57,7 @@ runs:
 
     - name: Generate Tags
       id: tagger
-      uses: coderbunker/modern-resume-env/.github/actions/docker-tag-generator@develop
+      uses: coderbunker/modern-resume-env/.github/actions/docker-tag-generator@main
       with:
         new_release_version: ${{ inputs.version }}
         is_new_release: ${{ inputs.is_new_release }}

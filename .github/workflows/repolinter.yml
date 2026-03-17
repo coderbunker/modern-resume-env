@@ -19,7 +19,7 @@ jobs:
           repository: coderbunker/modern-resume-env
           token: ${{ secrets.GITHUB_TOKEN }}
           path: env-repo
-          ref: develop
+          ref: main
 
       - name: Setup Environment
         uses: ./env-repo/.github/actions/setup-env
@@ -84,3 +84,11 @@ jobs:
         run: |
           cd target-repo
           nix flake check
+
+      - name: Check Repository Settings
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          chmod +x env-repo/.github/scripts/check-repo-settings.sh
+          env-repo/.github/scripts/check-repo-settings.sh "${{ github.repository }}"

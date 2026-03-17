@@ -4,16 +4,13 @@ description: Consolidates semantic-release and manual version determination into
 inputs:
   extra_plugins:
     required: false
-    type: string
     description: "Extra plugins for semantic-release"
   dry_run:
     required: false
-    type: boolean
-    default: false
+    default: "false"
     description: "Whether to run semantic-release in dry-run mode"
   github_token:
     required: false
-    type: string
     description: "GitHub token for semantic-release"
     default: ${{ github.token }}
 
@@ -55,7 +52,7 @@ runs:
     - name: Get Fallback Version
       id: fallback
       if: steps.semantic.outputs.new_release_published != 'true'
-      uses: coderbunker/modern-resume-env/.github/actions/get-version@develop
+      uses: coderbunker/modern-resume-env/.github/actions/get-version@main
 
     - name: Determine Final Version
       id: final_version

@@ -47,17 +47,18 @@ runs:
           TAGS="type=raw,value=${PRIMARY_TAG}\n$TAGS"
         fi
 
-        # 2. Release Candidate (Staging - from develop branch)
-        if [[ "${{ github.ref_name }}" == "develop" && "${{ github.event_name }}" != "pull_request" ]]; then
+        # 2. Staging / Pre-release (from main branch - every push)
+        if [[ "${{ github.ref_name }}" == "main" && "${{ github.event_name }}" != "pull_request" ]]; then
           PRIMARY_TAG="${VERSION}-rc-build-${RUN_ID}"
           TAGS="type=raw,value=${PRIMARY_TAG}\n$TAGS"
           TAGS="type=raw,value=latest-staging\n$TAGS"
         fi
 
-        # 3. Production Release (from main branch)
+        # 3. Production Release (from main branch - only when semantic-release publishes)
         if [[ "${{ github.ref_name }}" == "main" && "${{ inputs.is_new_release }}" == "true" ]]; then
-          PRIMARY_TAG="${VERSION}-build-${RUN_ID}"
-          TAGS="type=raw,value=${PRIMARY_TAG}\n$TAGS"
+          # We keep the rc-build tag as the primary one for the registry,
+          # but add the clean semantic version and latest-prod for releases.
+          TAGS="type=raw,value=${VERSION}-build-${RUN_ID}\n$TAGS"
           TAGS="type=raw,value=${VERSION}\n$TAGS"
           TAGS="type=raw,value=latest-prod\n$TAGS"
         fi
