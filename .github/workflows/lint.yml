@@ -24,3 +24,6 @@ jobs:
 
       - name: Run pre-commit
         run: nix develop --command pre-commit run --all-files
+        env:
+          # TODO: enable this when we have a proper CI setup for the secrets
+          SKIP: validate-sops
